@@ -1,0 +1,33 @@
+{
+  "colors": {
+    "navy": "#002462",
+    "brand": "#0052be",
+    "brand-hover": "#003eaa",
+    "brand-light": "#ceebff",
+    "brand-muted": "#e5f3ff",
+    "background": "#f6f8fc",
+    "foreground": "#152b49",
+    "card": "#ffffff",
+    "muted": "#eff3f8",
+    "muted-foreground": "#58677a",
+    "border": "#e1e7f0",
+    "input": "#cdd7e4",
+    "destructive": "#a53333",
+    "destructive-soft": "#fbefed",
+    "destructive-foreground": "#ffffff",
+    "success": "#1f7a4d"
+  },
+  "radius": {
+    "panel": 12,
+    "card": 10,
+    "control": 8,
+    "tiny": 6,
+    "pill": 999
+  },
+  "sports": {
+    "padel": { "bg": "#e2ebfa", "ink": "#1f4f9c" },
+    "tenis": { "bg": "#fbe8dc", "ink": "#a2502a" },
+    "beach_tennis": { "bg": "#fbf0d3", "ink": "#8a6420" },
+    "pickleball": { "bg": "#e0f1e5", "ink": "#2b6a44" }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "ACE",
+    "slug": "ace-mobile",
+    "version": "0.1.0",
+    "scheme": "ace",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "br.com.acematchmaking.mobile"
+    },
+    "android": {
+      "package": "br.com.acematchmaking.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#f6f8fc",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#f6f8fc"
+        }
+      ],
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
