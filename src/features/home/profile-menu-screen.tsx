@@ -11,7 +11,7 @@ import {
   UserRound,
   Users,
 } from 'lucide-react-native';
-import { Pressable, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/ace/avatar';
@@ -76,8 +76,13 @@ export function ProfileMenuScreen() {
   // Pedidos de amizade pendentes (T33) ficam visíveis já no menu.
   const inbox = useInboxCount();
   if (!user) return null;
+  // Sete itens + painel navy passam da altura do celular: rola, como o SlantShell.
   return (
-    <View className='flex-1 bg-background'>
+    <ScrollView
+      className='flex-1 bg-background'
+      contentContainerClassName='pb-8'
+      showsVerticalScrollIndicator={false}
+    >
       {focused && <StatusBar style='light' />}
       {/* Única faixa navy do app autenticado, com a diagonal do perfil do web. */}
       <SlantPanel
@@ -130,6 +135,6 @@ export function ProfileMenuScreen() {
           );
         })}
       </View>
-    </View>
+    </ScrollView>
   );
 }

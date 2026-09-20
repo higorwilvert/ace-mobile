@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 
 import { api } from '@/lib/api-client';
 import { makePage, makeUser } from '@/test/fixtures';
@@ -50,6 +51,13 @@ describe('ProfileMenuScreen', () => {
     ].forEach((item) => expect(screen.getByText(item)).toBeOnTheScreen());
     expect(screen.queryByText('Sair')).not.toBeOnTheScreen();
     expect(screen.queryByText(/T24/)).not.toBeOnTheScreen();
+  });
+
+  it('rola: os sete itens não cabem com o painel navy em telas menores', () => {
+    renderWithQuery(<ProfileMenuScreen />);
+    const scroll = screen.UNSAFE_getByType(ScrollView);
+    expect(scroll).toBeTruthy();
+    expect(screen.getByText('Conta')).toBeOnTheScreen();
   });
 
   it('navega para a tela do item tocado', () => {
