@@ -37,14 +37,14 @@ describe('LoginScreen', () => {
     const apiSession = makeSession();
     jest.mocked(login).mockResolvedValue(apiSession);
     renderWithQuery(<LoginScreen />);
-    fill('  Ana@Exemplo.com ', 'segredo-muito-longo');
+    fill('  Ana@Exemplo.com ', 'Segredo-longo1');
     submit();
     await waitFor(() =>
       expect(session.signIn).toHaveBeenCalledWith(apiSession),
     );
     expect(login).toHaveBeenCalledWith({
       email: 'ana@exemplo.com',
-      password: 'segredo-muito-longo',
+      password: 'Segredo-longo1',
     });
   });
   it('shows the reviewed API message on failure', async () => {

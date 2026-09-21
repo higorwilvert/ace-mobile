@@ -66,6 +66,8 @@ const messages: Record<string, string> = {
   RESOURCE_NOT_FOUND: 'O conteúdo que você procura não está disponível.',
   RATE_LIMITED:
     'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.',
+  UNSUPPORTED_IMAGE: 'Envie uma imagem JPEG, PNG ou WebP.',
+  PAYLOAD_TOO_LARGE: 'O arquivo precisa ter no máximo 5 MB.',
   ORIGIN_INVALID:
     'Não foi possível conectar este endereço à API. Confira a configuração da aplicação.',
   FORBIDDEN: 'Você não tem permissão para realizar esta ação.',
@@ -167,6 +169,11 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+/** Texto para toast: mensagem revisada do contrato ou fallback genérico. */
+export const errorMessage = (error: unknown) =>
+  error instanceof ApiError
+    ? error.message
+    : 'Não foi possível concluir. Tente novamente.';
 export const api = Axios.create({
   baseURL: env.API_URL,
   allowAbsoluteUrls: false,
@@ -179,7 +186,7 @@ export function validateApiPath(path: string) {
   return path;
 }
 export async function apiRequest<T extends z.ZodTypeAny>(
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   schema: T,
   data?: unknown,
@@ -218,7 +225,10 @@ export async function apiRequest<T extends z.ZodTypeAny>(
     signal: options.signal,
     headers: {
       Accept: 'application/json',
-      ...(data !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      // FormData (upload) deixa o runtime definir o boundary do multipart.
+      ...(data !== undefined && !(data instanceof FormData)
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   };

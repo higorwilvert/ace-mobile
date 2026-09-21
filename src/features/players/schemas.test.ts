@@ -20,7 +20,6 @@ const personalBase = {
   state: 'SC',
   city: 'Florianópolis',
   phone: '',
-  avatarUrl: '',
   bio: '',
   dominantHand: '',
 };
@@ -33,20 +32,6 @@ describe('personalSchema', () => {
     expect(
       personalSchema.safeParse({ ...personalBase, phone: 'telefone' }).success,
     ).toBe(false);
-  });
-  it('exige https no avatar', () => {
-    expect(
-      personalSchema.safeParse({
-        ...personalBase,
-        avatarUrl: 'http://x.com/a.png',
-      }).success,
-    ).toBe(false);
-    expect(
-      personalSchema.safeParse({
-        ...personalBase,
-        avatarUrl: 'https://x.com/a.png',
-      }).success,
-    ).toBe(true);
   });
   it('limita a bio a 1000 caracteres', () => {
     expect(

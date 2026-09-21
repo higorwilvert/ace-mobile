@@ -14,18 +14,13 @@ import { TextField } from '@/components/ui/text-field';
 import palette from '@/config/palette.json';
 import { authQueryOptions } from '@/features/auth/api';
 import { useSession } from '@/features/auth/session';
-import { ApiError } from '@/lib/api-client';
+import { errorMessage } from '@/lib/api-client';
 import { sessionEnded } from '@/lib/events';
 import { sessionToken } from '@/lib/token';
 
 import { deactivateAccount, setVisibility } from './api';
 
 const CONFIRM_WORD = 'DESATIVAR';
-const errorMessage = (error: unknown) =>
-  error instanceof ApiError
-    ? error.message
-    : 'Não foi possível concluir. Tente novamente.';
-
 function Panel({
   title,
   children,

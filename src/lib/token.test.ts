@@ -73,6 +73,18 @@ describe('sessionToken', () => {
     expect(listener).toHaveBeenCalledTimes(1);
     stop();
   });
+  it('keeps a 30-day session alive past the setTimeout ceiling', async () => {
+    jest.useFakeTimers();
+    const day = 24 * 60 * 60_000;
+    await sessionToken.set(
+      secret,
+      new Date(Date.now() + 30 * day).toISOString(),
+    );
+    await jest.advanceTimersByTimeAsync(29 * day);
+    expect(sessionToken.get()).toBe(secret);
+    await jest.advanceTimersByTimeAsync(2 * day);
+    expect(sessionToken.get()).toBeNull();
+  });
   it('ends the session when the expiry timer fires', async () => {
     jest.useFakeTimers();
     const listener = jest.fn();

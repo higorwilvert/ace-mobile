@@ -19,7 +19,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
 import { useZodForm } from '@/hooks/use-zod-form';
-import { ApiError } from '@/lib/api-client';
+import { errorMessage } from '@/lib/api-client';
 import type { Availability } from '@/types/api';
 
 import { availabilityQuery, deleteAvailability, saveAvailability } from './api';
@@ -33,10 +33,6 @@ import {
 } from './labels';
 import { availabilityFormSchema } from './schemas';
 
-const errorMessage = (error: unknown) =>
-  error instanceof ApiError
-    ? error.message
-    : 'Não foi possível concluir. Tente novamente.';
 const windowLabel = (item: Availability) =>
   `${item.startTime} — ${item.endTime}`;
 

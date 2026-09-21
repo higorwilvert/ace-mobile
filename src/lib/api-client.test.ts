@@ -52,6 +52,23 @@ describe('ACE HTTP trust boundary', () => {
     expect(api.defaults.withCredentials).toBe(false);
     expect(api.defaults.allowAbsoluteUrls).toBe(false);
   });
+  it('envia FormData sem Content-Type fixo (o RN define o boundary)', async () => {
+    const spy = jest
+      .spyOn(api, 'request')
+      .mockResolvedValue({ status: 200, data: { data: 'ok' } });
+    const body = new FormData();
+    await apiRequest(
+      'PUT',
+      '/v1/users/me/avatar',
+      z.object({ data: z.string() }),
+      body,
+    );
+    const config = spy.mock.calls[0][0];
+    expect(config.method).toBe('PUT');
+    expect(config.data).toBe(body);
+    expect(config.headers).not.toHaveProperty('Content-Type');
+    expect(config.headers).toHaveProperty('Authorization');
+  });
   it('keeps public requests independent of the private session', async () => {
     const spy = jest
       .spyOn(api, 'request')

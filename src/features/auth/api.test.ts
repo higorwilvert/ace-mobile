@@ -18,12 +18,12 @@ describe('auth api', () => {
     const session = makeSession();
     const spy = jest.spyOn(api, 'request').mockResolvedValue(ok(session));
     await expect(
-      login({ email: '  Ana@Exemplo.com ', password: 'segredo-muito-longo' }),
+      login({ email: '  Ana@Exemplo.com ', password: 'Segredo-longo1' }),
     ).resolves.toEqual(session);
     expect(spy.mock.calls[0][0]).toMatchObject({
       method: 'POST',
       url: '/v1/auth/login',
-      data: { email: 'ana@exemplo.com', password: 'segredo-muito-longo' },
+      data: { email: 'ana@exemplo.com', password: 'Segredo-longo1' },
     });
     expect(spy.mock.calls[0][0].headers).not.toHaveProperty('Authorization');
   });
@@ -33,8 +33,8 @@ describe('auth api', () => {
     const values = {
       ...accountSchema.parse({
         email: 'ANA@exemplo.com',
-        password: 'segredo-muito-longo',
-        confirmPassword: 'segredo-muito-longo',
+        password: 'Segredo-longo1',
+        confirmPassword: 'Segredo-longo1',
       }),
       ...personalStepSchema.parse({
         fullName: ' Ana Clara Souza ',
@@ -47,7 +47,7 @@ describe('auth api', () => {
     expect(spy.mock.calls[0][0].data).toEqual({
       fullName: 'Ana Clara Souza',
       email: 'ana@exemplo.com',
-      password: 'segredo-muito-longo',
+      password: 'Segredo-longo1',
       city: 'Florianópolis',
       state: 'SC',
     });
@@ -57,8 +57,8 @@ describe('auth api', () => {
   it('accountSchema rejects mismatched passwords with the form message', () => {
     const result = accountSchema.safeParse({
       email: 'ana@exemplo.com',
-      password: 'segredo-muito-longo',
-      confirmPassword: 'outra-senha-longa',
+      password: 'Segredo-longo1',
+      confirmPassword: 'Outra-senha1',
     });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]).toMatchObject({

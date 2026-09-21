@@ -14,6 +14,16 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
+jest.mock('expo-image-picker', () => ({
+  requestMediaLibraryPermissionsAsync: jest.fn(async () => ({
+    status: 'granted',
+    granted: true,
+  })),
+  launchImageLibraryAsync: jest.fn(async () => ({
+    canceled: true,
+    assets: null,
+  })),
+}));
 jest.mock('expo-constants', () => ({
   __esModule: true,
   default: { expoConfig: { hostUri: 'localhost:8081' } },

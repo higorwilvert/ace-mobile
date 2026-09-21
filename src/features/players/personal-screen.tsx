@@ -4,7 +4,6 @@ import { FormProvider, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { toast } from 'sonner-native';
 
-import { Avatar } from '@/components/ace/avatar';
 import { FormPickerField, FormTextField } from '@/components/ace/form-fields';
 import { FormError, SubmitButton } from '@/components/ace/states';
 import { Screen } from '@/components/ui/screen';
@@ -17,6 +16,7 @@ import { formatPhone } from '@/lib/utils';
 import type { User } from '@/types/api';
 
 import { updateUser } from './api';
+import { AvatarPicker } from './avatar-picker';
 import { genderOptions, handOptions } from './labels';
 import { personalSchema } from './schemas';
 
@@ -30,13 +30,12 @@ function PersonalForm({ user }: { user: User }) {
     state: user.state,
     city: user.city,
     phone: user.phone ?? '',
-    avatarUrl: user.avatarUrl ?? '',
     bio: user.bio ?? '',
     dominantHand: user.dominantHand ?? '',
   });
-  const [state, avatarUrl, bio] = useWatch({
+  const [state, bio] = useWatch({
     control: form.control,
-    name: ['state', 'avatarUrl', 'bio'],
+    name: ['state', 'bio'],
   });
   const cities = useQuery(citiesQuery(state));
   // Trocar de estado invalida a cidade escolhida (a atual segue válida).
@@ -58,9 +57,7 @@ function PersonalForm({ user }: { user: User }) {
   }));
   return (
     <FormProvider {...form}>
-      <View className='items-center gap-2'>
-        <Avatar name={user.fullName} url={avatarUrl} size={88} />
-      </View>
+      <AvatarPicker user={user} />
       <View className='gap-4'>
         <FormTextField
           name='fullName'
@@ -116,15 +113,6 @@ function PersonalForm({ user }: { user: User }) {
           format={formatPhone}
           autoComplete='tel'
           maxLength={16}
-        />
-        <FormTextField
-          name='avatarUrl'
-          label='Foto (URL)'
-          placeholder='https://…'
-          autoCapitalize='none'
-          autoCorrect={false}
-          keyboardType='url'
-          hint='Cole o endereço de uma imagem https.'
         />
         <FormTextField
           name='bio'

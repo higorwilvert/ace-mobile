@@ -16,19 +16,6 @@ const phoneInput = z.union([
   z.literal(''),
   z.string().regex(/^\+?[0-9 ()-]{8,20}$/, 'Telefone inválido'),
 ]);
-// O `URL` do Hermes não expõe `protocol` de forma confiável; a regra da API
-// (https, sem credenciais no host) vira regex aqui e o servidor decide o resto.
-const avatarInput = z.union([
-  z.literal(''),
-  z
-    .string()
-    .max(2048)
-    .regex(
-      /^https:\/\/[^\s/@]+\.[^\s/@]+(?:\/[^\s]*)?$/,
-      'Informe uma URL https',
-    ),
-]);
-
 export const personalSchema = z.object({
   fullName: plainText({
     min: 2,
@@ -38,7 +25,6 @@ export const personalSchema = z.object({
   gender: z.union([genderSchema, z.literal('')]),
   ...locationShape,
   phone: phoneInput,
-  avatarUrl: avatarInput,
   bio: optionalText(1000),
   dominantHand: z.union([handSchema, z.literal('')]),
 });
@@ -47,7 +33,6 @@ export type PersonalValues = z.output<typeof personalSchema>;
 /** Etapa opcional do onboarding: só os campos que não vêm do cadastro. */
 export const personalExtrasSchema = personalSchema.pick({
   phone: true,
-  avatarUrl: true,
   bio: true,
   dominantHand: true,
 });

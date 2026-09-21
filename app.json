@@ -33,7 +33,13 @@
           "backgroundColor": "#f6f8fc"
         }
       ],
-      "expo-image"
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O ACE usa sua galeria para você escolher a foto de perfil."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

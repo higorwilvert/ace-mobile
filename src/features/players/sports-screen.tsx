@@ -11,7 +11,7 @@ import { Screen } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
-import { ApiError } from '@/lib/api-client';
+import { errorMessage } from '@/lib/api-client';
 import type { PlayerProfile } from '@/types/api';
 
 import {
@@ -22,11 +22,6 @@ import {
 } from './api';
 import { frequencyLabel, sideLabels, yearsLabel } from './labels';
 import { SportForm } from './sport-form';
-
-const errorMessage = (error: unknown) =>
-  error instanceof ApiError
-    ? error.message
-    : 'Não foi possível concluir. Tente novamente.';
 
 /** Linha "categoria · lado · tempo · frequência", só com o que foi informado. */
 export const profileDetails = (profile: {

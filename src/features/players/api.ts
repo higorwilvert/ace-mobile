@@ -59,6 +59,36 @@ export async function setVisibility(
   return data;
 }
 
+// O RN aceita `{ uri, name, type }` como parte multipart; o axios não fixa
+// Content-Type para FormData, então o boundary vem do runtime.
+export async function uploadAvatar(asset: {
+  uri: string;
+  mimeType: string;
+}): Promise<User> {
+  const body = new FormData();
+  body.append('file', {
+    uri: asset.uri,
+    name: 'avatar.jpg',
+    type: asset.mimeType,
+  } as unknown as Blob);
+  const { data } = await apiRequest(
+    'PUT',
+    '/v1/users/me/avatar',
+    apiEnvelope(userSchema),
+    body,
+  );
+  return data;
+}
+
+export async function deleteAvatar(): Promise<User> {
+  const { data } = await apiRequest(
+    'DELETE',
+    '/v1/users/me/avatar',
+    apiEnvelope(userSchema),
+  );
+  return data;
+}
+
 export function deactivateAccount(): Promise<void> {
   return apiRequest('DELETE', '/v1/users/me', z.void());
 }

@@ -133,7 +133,8 @@ export function RegisterScreen() {
               <FormTextField
                 name='password'
                 label='Senha'
-                placeholder='Mínimo de 12 caracteres'
+                placeholder='Mínimo de 8 caracteres'
+                hint='Use letra maiúscula, minúscula, número e um caractere especial.'
                 secure
                 autoComplete='new-password'
                 textContentType='newPassword'

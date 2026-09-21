@@ -6,7 +6,6 @@ import { FormProvider, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 
-import { Avatar } from '@/components/ace/avatar';
 import { FormPickerField, FormTextField } from '@/components/ace/form-fields';
 import { SlantShell } from '@/components/ace/slant-shell';
 import {
@@ -24,6 +23,7 @@ import palette from '@/config/palette.json';
 import { authQueryOptions } from '@/features/auth/api';
 import { useSession } from '@/features/auth/session';
 import { profilesQuery, updateUser } from '@/features/players/api';
+import { AvatarPicker } from '@/features/players/avatar-picker';
 import { handOptions } from '@/features/players/labels';
 import { personalExtrasSchema } from '@/features/players/schemas';
 import { SportForm } from '@/features/players/sport-form';
@@ -42,11 +42,9 @@ function ExtrasStep({ onDone }: { onDone: () => void }) {
   const queryClient = useQueryClient();
   const form = useZodForm(personalExtrasSchema, {
     phone: user?.phone ?? '',
-    avatarUrl: user?.avatarUrl ?? '',
     bio: user?.bio ?? '',
     dominantHand: user?.dominantHand ?? '',
   });
-  const avatarUrl = useWatch({ control: form.control, name: 'avatarUrl' });
   const bio = useWatch({ control: form.control, name: 'bio' });
   const mutation = useMutation({
     mutationFn: updateUser,
@@ -58,20 +56,9 @@ function ExtrasStep({ onDone }: { onDone: () => void }) {
   const submit = form.handleSubmit((values) => mutation.mutate(values));
   return (
     <>
-      <View className='items-center'>
-        <Avatar name={user?.fullName ?? ''} url={avatarUrl} size={88} />
-      </View>
+      {user && <AvatarPicker user={user} />}
       <FormProvider {...form}>
         <View className='gap-4'>
-          <FormTextField
-            name='avatarUrl'
-            label='Foto (URL)'
-            placeholder='https://…'
-            autoCapitalize='none'
-            autoCorrect={false}
-            keyboardType='url'
-            hint='Cole o endereço de uma imagem https.'
-          />
           <FormTextField
             name='phone'
             label='Telefone'

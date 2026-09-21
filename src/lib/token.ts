@@ -2,11 +2,12 @@ import * as SecureStore from 'expo-secure-store';
 
 import { sessionEnded } from './events';
 
-// A API usa Bearer opaco com TTL curto e sem refresh. O token vive em memória
-// e é persistido só no SecureStore (Keychain/Keystore): nunca em AsyncStorage,
-// no cache do React Query ou em logs.
+// A API usa Bearer opaco absoluto (30 dias) e sem refresh. O token vive em
+// memória e é persistido só no SecureStore (Keychain/Keystore): nunca em
+// AsyncStorage, no cache do React Query ou em logs.
 const STORAGE_KEY = 'ace.session';
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+// setTimeout estoura acima de 2^31-1 ms (24,8 dias); o timer se reagenda.
 const MAX_TIMER_MS = 2 ** 31 - 1;
 const storeOptions: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
@@ -19,7 +20,10 @@ let expirationTimer: ReturnType<typeof setTimeout> | undefined;
 function schedule(expiresAt: number) {
   clearTimeout(expirationTimer);
   expirationTimer = setTimeout(
-    () => void sessionToken.clear(true),
+    () => {
+      if (expiresAt > Date.now()) schedule(expiresAt);
+      else void sessionToken.clear(true);
+    },
     Math.min(MAX_TIMER_MS, Math.max(0, expiresAt - Date.now())),
   );
 }

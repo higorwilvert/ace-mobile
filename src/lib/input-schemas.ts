@@ -33,13 +33,21 @@ export const emailInput = z
       .refine((value) => !CONTROL_OR_FORMAT.test(value), 'Email inválido'),
   );
 
+// Espelha PasswordService.assertAllowed da API: 8–128 com as quatro classes.
 export const passwordInput = z
   .string()
-  .min(12, 'A senha deve ter no mínimo 12 caracteres')
+  .min(8, 'A senha deve ter no mínimo 8 caracteres')
   .max(128, 'A senha deve ter no máximo 128 caracteres')
   .refine(
     (value) => !CONTROL_OR_FORMAT.test(value),
     'A senha contém caracteres inválidos',
+  )
+  .refine((value) => /\p{Ll}/u.test(value), 'Inclua uma letra minúscula')
+  .refine((value) => /\p{Lu}/u.test(value), 'Inclua uma letra maiúscula')
+  .refine((value) => /\p{Nd}/u.test(value), 'Inclua um número')
+  .refine(
+    (value) => /[^\p{L}\p{N}]/u.test(value),
+    'Inclua um caractere especial (ex.: ! @ # -)',
   );
 
 export const currentPasswordInput = z

@@ -15,9 +15,9 @@ jest.mock('./api', () => ({
   login: jest.fn(),
 }));
 
-const fillAccount = (confirm = 'segredo-muito-longo') => {
+const fillAccount = (confirm = 'Segredo-longo1') => {
   fireEvent.changeText(screen.getByLabelText('E-mail'), 'ANA@exemplo.com');
-  fireEvent.changeText(screen.getByLabelText('Senha'), 'segredo-muito-longo');
+  fireEvent.changeText(screen.getByLabelText('Senha'), 'Segredo-longo1');
   fireEvent.changeText(screen.getByLabelText('Confirmar senha'), confirm);
 };
 const next = () => fireEvent.press(screen.getByText('Continuar'));
@@ -51,7 +51,7 @@ describe('RegisterScreen', () => {
     renderWithQuery(<RegisterScreen />);
     next();
     expect(await screen.findByText('Email inválido')).toBeOnTheScreen();
-    fillAccount('outra-senha-longa');
+    fillAccount('Outra-senha1');
     next();
     expect(
       await screen.findByText('As senhas precisam ser iguais'),
@@ -95,7 +95,7 @@ describe('RegisterScreen', () => {
       expect.objectContaining({
         fullName: 'Ana Clara Souza',
         email: 'ana@exemplo.com',
-        password: 'segredo-muito-longo',
+        password: 'Segredo-longo1',
         state: 'SC',
         city: 'Florianópolis',
         gender: '',
@@ -103,7 +103,7 @@ describe('RegisterScreen', () => {
     );
     expect(login).toHaveBeenCalledWith({
       email: 'ana@exemplo.com',
-      password: 'segredo-muito-longo',
+      password: 'Segredo-longo1',
     });
   });
 

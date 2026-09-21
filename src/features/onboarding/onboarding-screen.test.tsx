@@ -82,7 +82,6 @@ describe('OnboardingScreen', () => {
     const patch = spy.mock.calls.find((call) => call[0].method === 'PATCH');
     expect(patch?.[0].data).toEqual({
       phone: null,
-      avatarUrl: null,
       bio: 'Jogo à noite.',
       dominantHand: null,
     });

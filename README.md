@@ -74,7 +74,7 @@ Tokens visuais em `src/config/palette.json` (azuis do web convertidos de oklch, 
 
 ## Sessão e segurança
 
-A API usa **Bearer opaco** com TTL de 60 minutos e sem refresh. O token fica em memória e é persistido no **`expo-secure-store`** (Keychain no iOS, Keystore no Android, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`). Ao abrir o app, `SessionProvider` restaura o token e o valida em `GET /v1/users/me`; 401 limpa tudo e volta ao login com aviso; falha de rede mantém o token e mostra a mensagem no login. Reabrir o app dentro do TTL não pede senha; depois dele, sim — limitação do contrato atual, não contornada no cliente.
+A API usa **Bearer opaco** com TTL absoluto de 30 dias e sem refresh. O token fica em memória e é persistido no **`expo-secure-store`** (Keychain no iOS, Keystore no Android, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`). Ao abrir o app, `SessionProvider` restaura o token e o valida em `GET /v1/users/me`; 401 limpa tudo e volta ao login com aviso; falha de rede mantém o token e mostra a mensagem no login. Reabrir o app dentro dos 30 dias não pede senha; depois deles (ou após logout/redefinição de senha), sim. O timer de expiração se reagenda acima do teto de 24,8 dias do `setTimeout`.
 
 Requisições privadas só saem com token válido; um 401 só encerra a sessão se o token da resposta ainda for o atual. Logout revoga na API antes de limpar localmente. Respostas são validadas com Zod; erros chegam à interface só pelo mapa de códigos → mensagens em `src/lib/api-client.ts`. Nada além de `EXPO_PUBLIC_API_URL` entra no bundle; não há segredos no cliente.
 

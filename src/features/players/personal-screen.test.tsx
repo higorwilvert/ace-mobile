@@ -28,6 +28,9 @@ describe('PersonalScreen', () => {
     expect(screen.getByText('ana@exemplo.com')).toBeOnTheScreen();
     expect(screen.queryByLabelText('E-mail')).not.toBeOnTheScreen();
     expect(screen.getByText('AS')).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Alterar foto de perfil' }),
+    ).toBeOnTheScreen();
   });
 
   it('salva convertendo campos vazios em null e atualiza o cache', async () => {
@@ -50,7 +53,6 @@ describe('PersonalScreen', () => {
         state: 'SC',
         city: 'Florianópolis',
         phone: null,
-        avatarUrl: null,
         bio: 'Oi',
         dominantHand: null,
       },

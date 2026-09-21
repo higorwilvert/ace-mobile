@@ -11,6 +11,7 @@ import {
 
 import {
   deactivateAccount,
+  deleteAvatar,
   deletePlayerProfile,
   playerProfileQuery,
   saveAvailability,
@@ -18,6 +19,7 @@ import {
   searchPlayersQuery,
   setVisibility,
   updateUser,
+  uploadAvatar,
   userSearchItemSchema,
 } from './api';
 
@@ -41,7 +43,6 @@ describe('players api', () => {
       state: 'SC',
       city: 'Florianópolis',
       phone: '',
-      avatarUrl: '',
       bio: '',
       dominantHand: 'RIGHT',
     });
@@ -54,7 +55,6 @@ describe('players api', () => {
         state: 'SC',
         city: 'Florianópolis',
         phone: null,
-        avatarUrl: null,
         bio: null,
         dominantHand: 'RIGHT',
       },
@@ -65,15 +65,37 @@ describe('players api', () => {
     const spy = jest.spyOn(api, 'request').mockResolvedValue(ok(makeUser()));
     await updateUser({
       phone: '48999990000',
-      avatarUrl: '',
       bio: 'Oi',
       dominantHand: '',
     });
     expect(spy.mock.calls[0][0].data).toEqual({
       phone: '48999990000',
-      avatarUrl: null,
       bio: 'Oi',
       dominantHand: null,
+    });
+  });
+
+  it('uploadAvatar envia multipart PUT com o arquivo e devolve o usuário', async () => {
+    const saved = makeUser({ avatarUrl: 'https://pub.r2.dev/avatars/a.webp' });
+    const spy = jest.spyOn(api, 'request').mockResolvedValue(ok(saved));
+    await expect(
+      uploadAvatar({ uri: 'file:///tmp/foto.jpg', mimeType: 'image/jpeg' }),
+    ).resolves.toEqual(saved);
+    const config = spy.mock.calls[0][0];
+    expect(config).toMatchObject({
+      method: 'PUT',
+      url: '/v1/users/me/avatar',
+    });
+    expect(config.data).toBeInstanceOf(FormData);
+  });
+
+  it('deleteAvatar faz DELETE em /v1/users/me/avatar', async () => {
+    const saved = makeUser({ avatarUrl: null });
+    const spy = jest.spyOn(api, 'request').mockResolvedValue(ok(saved));
+    await expect(deleteAvatar()).resolves.toEqual(saved);
+    expect(spy.mock.calls[0][0]).toMatchObject({
+      method: 'DELETE',
+      url: '/v1/users/me/avatar',
     });
   });
 
