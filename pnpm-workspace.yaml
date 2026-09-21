@@ -1,3 +1,7 @@
 nodeLinker: hoisted
 allowBuilds:
   unrs-resolver: false
+# GHSA-vcc3-ghjq-m6fr (ReDoS em percent-encoding malformado em deep links);
+# expo-router 57 ainda puxa query-string 7 → decode-uri-component 0.2.
+overrides:
+  'decode-uri-component@<0.5.0': '0.5.0'

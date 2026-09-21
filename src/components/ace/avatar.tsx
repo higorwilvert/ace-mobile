@@ -2,7 +2,18 @@ import { useState } from 'react';
 import { Image, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
+import { env } from '@/config/env';
 import { cn, getFirstAndLastLetter } from '@/lib/utils';
+
+// https de qualquer origem, ou a própria API no modo local de dev — como no web.
+const mediaBase = new URL('/v1/media/', env.API_URL).href;
+function isSafeImageUrl(url: string) {
+  try {
+    return new URL(url).protocol === 'https:' || url.startsWith(mediaBase);
+  } catch {
+    return false;
+  }
+}
 
 export function Avatar({
   name,
@@ -17,7 +28,7 @@ export function Avatar({
 }) {
   // Imagem quebrada cai nas iniciais, como no web.
   const [failed, setFailed] = useState(false);
-  const showImage = Boolean(url) && !failed;
+  const showImage = Boolean(url && isSafeImageUrl(url)) && !failed;
   return (
     <View
       className={cn(

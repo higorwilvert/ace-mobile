@@ -4,7 +4,12 @@ const expoPreset = require('jest-expo/jest-preset');
 
 // Bibliotecas publicadas só em ESM (.mjs) precisam passar pelo Babel, além
 // das que o preset do Expo já transforma.
-const extraEsmPackages = ['lucide-react-native', 'sonner-native'];
+const extraEsmPackages = [
+  'lucide-react-native',
+  'sonner-native',
+  // Fixado em 0.5 (ESM) pelo override em pnpm-workspace.yaml.
+  'decode-uri-component',
+];
 const [defaultPattern, ...otherPatterns] = expoPreset.transformIgnorePatterns;
 const babelTransform = expoPreset.transform['\\.[jt]sx?$'];
 
