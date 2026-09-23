@@ -41,7 +41,11 @@ yarn-error.*
 /android
 
 # ACE
+/docs/*
 /docs
+!/docs/evidencias/
+/docs/evidencias/*
+!/docs/evidencias/t37/
 coverage/
 .env
 .env.local

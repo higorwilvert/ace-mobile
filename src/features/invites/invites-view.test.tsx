@@ -8,14 +8,19 @@ import { mockSession, seedToken } from '@/test/session-mock';
 import { MyInvitesView } from './invites-view';
 
 jest.mock('@/features/auth/session');
+const mockSetParams = jest.fn();
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    setParams: mockSetParams,
+  }),
   useFocusEffect: () => {},
 }));
 
 type Config = { url?: string; params?: Record<string, unknown> };
-const go = jest.fn();
 const render = (
   search: Parameters<typeof MyInvitesView>[0]['search'],
   invites = [makeMyInvite()],
@@ -23,7 +28,7 @@ const render = (
   const spy = jest
     .spyOn(api, 'request')
     .mockResolvedValue({ status: 200, data: makePage(invites) });
-  renderWithQuery(<MyInvitesView search={search} go={go} header={null} />);
+  renderWithQuery(<MyInvitesView search={search} header={null} />);
   return spy;
 };
 
@@ -48,12 +53,11 @@ describe('MyInvitesView', () => {
     expect(call.params).toMatchObject({ direction: 'received', limit: 20 });
   });
 
-  it('chips gravam caixa e situação nos params', async () => {
+  it('não repete os filtros em linhas de chips', async () => {
     render({ view: 'invites', role: 'all', box: 'received' });
-    fireEvent.press(await screen.findByText('Enviados'));
-    expect(go).toHaveBeenCalledWith({ box: 'sent', status: undefined });
-    fireEvent.press(screen.getByRole('button', { name: 'Recusado' }));
-    expect(go).toHaveBeenCalledWith({ status: 'DECLINED' });
+    await screen.findByLabelText('Aceitar convite de Ana');
+    expect(screen.queryByLabelText('Caixa')).toBeNull();
+    expect(screen.queryByLabelText('Situação do convite')).toBeNull();
   });
 
   it('vazios distintos por caixa', async () => {
@@ -61,12 +65,35 @@ describe('MyInvitesView', () => {
     expect(
       await screen.findByText('Nenhum convite recebido'),
     ).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Limpar filtros' })).toBeNull();
+    expect(screen.getByText('Minhas partidas')).toBeOnTheScreen();
     jest.restoreAllMocks();
     render({ view: 'invites', role: 'all', box: 'sent' }, []);
     expect(
       await screen.findByText('Você ainda não convidou ninguém'),
     ).toBeOnTheScreen();
     fireEvent.press(screen.getByText('Minhas partidas'));
-    expect(go).toHaveBeenCalledWith({ view: 'matches', status: undefined });
+    expect(mockSetParams).toHaveBeenCalledWith({
+      view: 'matches',
+      role: 'all',
+      box: 'received',
+      status: '',
+    });
+  });
+
+  it.each([
+    [{ view: 'invites', role: 'all', box: 'received', status: 'PENDING' }],
+    [{ view: 'invites', role: 'all', box: 'sent' }],
+  ] as const)('oferece limpar filtros no vazio de %p', async (search) => {
+    render(search, []);
+    const clear = await screen.findByRole('button', { name: 'Limpar filtros' });
+    expect(screen.getByText('Minhas partidas')).toBeOnTheScreen();
+    fireEvent.press(clear);
+    expect(mockSetParams).toHaveBeenCalledWith({
+      view: 'invites',
+      role: 'all',
+      box: 'received',
+      status: '',
+    });
   });
 });

@@ -1,13 +1,19 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleDot, Inbox, Plus, Send } from 'lucide-react-native';
-import { type ReactNode, useMemo } from 'react';
+import {
+  CircleDot,
+  Inbox,
+  Plus,
+  Send,
+  SlidersHorizontal,
+} from 'lucide-react-native';
+import { type ReactNode, useMemo, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/ace/states';
 import { Button } from '@/components/ui/button';
-import { Chips } from '@/components/ui/chips';
+import { ActiveFilterChips, Chip } from '@/components/ui/chips';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
@@ -24,33 +30,15 @@ import {
   withdrawApplication,
 } from './api';
 import { MatchCard, ParticipationBadge } from './match-card';
+import { MineFiltersSheet } from './mine-filters-sheet';
 import { PagedList } from './paged-list';
 import {
   matchStatusLabels,
   type MineSearch,
+  mineActiveFilters,
   mineSearchSchema,
-  participantStatusLabels,
 } from './schemas';
 import { useMatchMutation } from './use-match-mutation';
-
-const roleChips: { value: MineSearch['role']; label: string }[] = [
-  { value: 'all', label: 'Todas' },
-  { value: 'creator', label: 'Que eu organizo' },
-  { value: 'participant', label: 'Que eu participo' },
-];
-const matchStatusChips: MatchStatus[] = [
-  'OPEN',
-  'CONFIRMED',
-  'DRAFT',
-  'COMPLETED',
-  'CANCELLED',
-];
-const applicationStatusChips: ParticipantStatus[] = [
-  'PENDING',
-  'CONFIRMED',
-  'DECLINED',
-  'REMOVED',
-];
 
 /** `view`/`role`/`box`/`status` vivem nos params da aba, como os filtros do Explorar. */
 function useMineSearch() {
@@ -92,28 +80,7 @@ function MyMatchesView({
   return (
     <PagedList
       query={matches}
-      header={
-        <View className='gap-3'>
-          {header}
-          <Chips
-            label='Meu papel'
-            options={roleChips}
-            value={search.role}
-            clearable={false}
-            onChange={(role) => go({ role: role ?? 'all' })}
-          />
-          <Chips
-            label='Situação'
-            options={matchStatusChips.map((value) => ({
-              value,
-              label: matchStatusLabels[value],
-            }))}
-            value={status}
-            onChange={(next) => go({ status: next })}
-          />
-          <View className='h-1' />
-        </View>
-      }
+      header={header}
       empty={
         <EmptyState
           icon={<CircleDot size={28} color={brand} />}
@@ -131,6 +98,15 @@ function MyMatchesView({
           }
         >
           <View className='w-full gap-2 pt-2'>
+            {mineActiveFilters(search).length > 0 && (
+              <Button
+                variant='secondary'
+                label='Limpar filtros'
+                onPress={() =>
+                  go({ role: 'all', box: 'received', status: undefined })
+                }
+              />
+            )}
             <Button
               variant='secondary'
               label='Explorar partidas'
@@ -203,28 +179,23 @@ function MyApplicationsView({
   return (
     <PagedList
       query={applications}
-      header={
-        <View className='gap-3'>
-          {header}
-          <Chips
-            label='Situação da candidatura'
-            options={applicationStatusChips.map((value) => ({
-              value,
-              label: participantStatusLabels[value],
-            }))}
-            value={status}
-            onChange={(next) => go({ status: next })}
-          />
-          <View className='h-1' />
-        </View>
-      }
+      header={header}
       empty={
         <EmptyState
           icon={<Inbox size={28} color={palette.colors.brand} />}
           title='Nenhuma candidatura por aqui'
           description='Quando você pedir para entrar numa partida, ela aparece nesta lista com a resposta do criador.'
         >
-          <View className='w-full pt-2'>
+          <View className='w-full gap-2 pt-2'>
+            {mineActiveFilters(search).length > 0 && (
+              <Button
+                variant='secondary'
+                label='Limpar filtros'
+                onPress={() =>
+                  go({ role: 'all', box: 'received', status: undefined })
+                }
+              />
+            )}
             <Button
               label='Explorar partidas abertas'
               onPress={() => router.push('/matches')}
@@ -265,6 +236,8 @@ export function MineScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { search, go } = useMineSearch();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilters = mineActiveFilters(search);
   const applications = search.view === 'applications';
   const invites = search.view === 'invites';
   const copy = invites
@@ -330,12 +303,35 @@ export function MineScreen() {
           );
         })}
       </View>
+      <View className='gap-2'>
+        <View className='flex-row flex-wrap gap-2'>
+          <Chip
+            label={
+              activeFilters.length
+                ? `Filtrar (${activeFilters.length})`
+                : 'Filtrar'
+            }
+            icon={<SlidersHorizontal size={14} color={palette.colors.brand} />}
+            onPress={() => setFiltersOpen(true)}
+          />
+        </View>
+        <ActiveFilterChips
+          chips={activeFilters.map((chip) => ({
+            key: chip.key,
+            label: chip.label,
+            onRemove: () => go(chip.clear),
+          }))}
+          onClear={() =>
+            go({ role: 'all', box: 'received', status: undefined })
+          }
+        />
+      </View>
     </View>
   );
   return (
     <Screen edges={['top']} className='px-0'>
       {invites ? (
-        <MyInvitesView key='invites' search={search} go={go} header={header} />
+        <MyInvitesView key='invites' search={search} header={header} />
       ) : applications ? (
         <MyApplicationsView
           key='applications'
@@ -362,6 +358,12 @@ export function MineScreen() {
       >
         <Plus size={24} color='#fff' strokeWidth={2.5} />
       </Pressable>
+      <MineFiltersSheet
+        visible={filtersOpen}
+        search={search}
+        onApply={go}
+        onClose={() => setFiltersOpen(false)}
+      />
     </Screen>
   );
 }

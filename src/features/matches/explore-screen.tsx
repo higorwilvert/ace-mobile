@@ -6,7 +6,6 @@ import {
   Plus,
   SlidersHorizontal,
   Sparkles,
-  X,
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
@@ -15,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SportIcon } from '@/components/ace/sport-icon';
 import { EmptyState, ErrorState } from '@/components/ace/states';
 import { Button } from '@/components/ui/button';
-import { Chip, Chips } from '@/components/ui/chips';
+import { ActiveFilterChips, Chip, Chips } from '@/components/ui/chips';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
@@ -27,7 +26,9 @@ import { searchMatchesQuery } from './api';
 import { MatchCard, MatchCardSkeleton } from './match-card';
 import { MatchFiltersSheet } from './match-filters-sheet';
 import {
+  activeFilterChips,
   activeFilterCount,
+  hasAnySearch,
   matchesSearchSchema,
   type MatchesSearch,
 } from './schemas';
@@ -78,15 +79,17 @@ export function ExploreScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   useRefetchOnFocus(matches.refetch);
 
-  const count = activeFilterCount(search);
   useEffect(() => {
-    if (located || count > 0 || !user) return;
+    if (located || !user) return;
     located = true;
+    if (hasAnySearch(search)) return;
     setSearch({ state: user.state, city: user.city });
-  }, [count, user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = matches.data?.pages.flatMap((page) => page.data) ?? [];
   const selectedSport = sports.data?.find((s) => s.id === search.sportId);
+  const count = activeFilterCount(search, selectedSport);
+  const hasFilters = hasAnySearch(search);
   const myCategory = profiles.data?.find(
     (p) => p.sportId === search.sportId,
   )?.categoryCode;
@@ -166,14 +169,15 @@ export function ExploreScreen() {
             }
           />
         )}
-        {count > 0 && (
-          <Chip
-            label='Limpar'
-            icon={<X size={14} color={brand} />}
-            onPress={() => setSearch({})}
-          />
-        )}
       </View>
+      <ActiveFilterChips
+        chips={activeFilterChips(search, selectedSport).map((chip) => ({
+          key: chip.key,
+          label: chip.label,
+          onRemove: () => setSearch({ ...search, ...chip.clear }),
+        }))}
+        onClear={() => setSearch({})}
+      />
       {!matches.isPending && !matches.isError && items.length > 0 && (
         <Text variant='muted' accessibilityRole='text'>
           {`${items.length} ${items.length === 1 ? 'partida' : 'partidas'}${matches.hasNextPage ? ' carregadas' : ''}`}
@@ -217,18 +221,18 @@ export function ExploreScreen() {
               <EmptyState
                 icon={<CircleDot size={28} color={brand} />}
                 title={
-                  count
+                  hasFilters
                     ? 'Nenhuma partida com esses filtros'
                     : 'Nenhuma partida aberta por enquanto'
                 }
                 description={
-                  count
+                  hasFilters
                     ? 'Amplie a busca ou crie a partida que você quer jogar.'
                     : 'Seja quem dá o primeiro saque: crie uma partida e receba candidaturas.'
                 }
               >
                 <View className='w-full gap-2 pt-2'>
-                  {count > 0 && (
+                  {hasFilters && (
                     <Button
                       variant='secondary'
                       label='Limpar filtros'

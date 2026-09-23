@@ -1,6 +1,8 @@
+import { X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import palette from '@/config/palette.json';
 import { cn } from '@/lib/utils';
 
 import { Text } from './text';
@@ -16,12 +18,15 @@ export function Chip({
   label,
   active = false,
   icon,
+  trailing,
   onPress,
   accessibilityLabel,
 }: {
   label: string;
   active?: boolean;
   icon?: ReactNode;
+  /** Conteúdo depois do rótulo (ex.: o ✕ de um filtro ativo). */
+  trailing?: ReactNode;
   onPress: () => void;
   accessibilityLabel?: string;
 }) {
@@ -30,6 +35,8 @@ export function Chip({
       accessibilityRole='button'
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ selected: active }}
+      // 36px de altura visual + 4px de folga em cima e embaixo = 44pt de alvo.
+      hitSlop={{ top: 4, bottom: 4 }}
       onPress={onPress}
       className={cn(
         'h-9 flex-row items-center gap-1.5 rounded-pill border px-3',
@@ -45,6 +52,7 @@ export function Chip({
       >
         {label}
       </Text>
+      {trailing}
     </Pressable>
   );
 }
@@ -90,5 +98,44 @@ export function Chips<T extends string>({
       })}
       <View className='w-3' />
     </ScrollView>
+  );
+}
+
+export type ActiveChip = { key: string; label: string; onRemove: () => void };
+
+/**
+ * Resumo do que está filtrado. Cada chip é o botão que se remove, em um
+ * toque, sem reabrir a folha. Quebra linha; nunca rola na horizontal.
+ */
+export function ActiveFilterChips({
+  chips,
+  onClear,
+}: {
+  chips: ActiveChip[];
+  onClear: () => void;
+}) {
+  if (!chips.length) return null;
+  return (
+    <View
+      className='flex-row flex-wrap gap-2'
+      accessibilityRole='none'
+      accessibilityLabel='Filtros ativos'
+    >
+      {chips.map((chip) => (
+        <Chip
+          key={chip.key}
+          label={chip.label}
+          active
+          accessibilityLabel={`Remover filtro ${chip.label}`}
+          trailing={<X size={14} color='#fff' />}
+          onPress={chip.onRemove}
+        />
+      ))}
+      <Chip
+        label='Limpar tudo'
+        icon={<X size={14} color={palette.colors.brand} />}
+        onPress={onClear}
+      />
+    </View>
   );
 }

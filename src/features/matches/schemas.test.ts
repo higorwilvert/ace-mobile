@@ -8,6 +8,7 @@ import {
 
 import type { MatchDetail } from './api';
 import {
+  activeFilterChips,
   activeFilterCount,
   dateOptions,
   durationLabel,
@@ -15,6 +16,7 @@ import {
   formatWhen,
   formatWhenLong,
   fromScheduledAt,
+  hasAnySearch,
   matchesSearchSchema,
   matchFormDefaults,
   matchFormSchema,
@@ -22,6 +24,7 @@ import {
   matchPermissions,
   matchStatusLabel,
   matchTitle,
+  mineActiveFilters,
   mineSearchSchema,
   placeLabel,
   timeOptions,
@@ -506,5 +509,105 @@ describe('parâmetros de busca', () => {
     expect(
       mineSearchSchema.parse({ view: 'invites', status: 'OPEN' }).status,
     ).toBeUndefined();
+  });
+});
+
+describe('activeFilterChips', () => {
+  it('não conta a modalidade, que já aparece selecionada nos chips', () => {
+    expect(activeFilterChips({ sportId: 1 })).toEqual([]);
+    expect(activeFilterCount({ sportId: 1 })).toBe(0);
+    expect(hasAnySearch({ sportId: 1 })).toBe(true);
+  });
+
+  it('junta cidade e estado num chip só, que limpa os dois', () => {
+    const chips = activeFilterChips({ city: 'Blumenau', state: 'SC' });
+    expect(chips).toHaveLength(1);
+    expect(chips[0]).toMatchObject({
+      key: 'city',
+      label: 'Blumenau · SC',
+      clear: { city: undefined, state: undefined },
+    });
+  });
+
+  it('mostra o estado sozinho quando não há cidade', () => {
+    expect(activeFilterChips({ state: 'SC' })).toEqual([
+      { key: 'state', label: 'SC', clear: { state: undefined } },
+    ]);
+  });
+
+  it('usa os rótulos de formato, composição e data', () => {
+    const chips = activeFilterChips({
+      teamSize: 2,
+      genderPolicy: 'MIXED',
+      dateFrom: '2026-09-22',
+      dateTo: '2026-09-30',
+    });
+    expect(chips.map((c) => c.label)).toEqual([
+      '2v2',
+      'Mista',
+      'De 22/09',
+      'Até 30/09',
+    ]);
+    expect(activeFilterCount({ teamSize: 2, genderPolicy: 'MIXED' })).toBe(2);
+  });
+
+  it('cai no código da categoria quando a modalidade não veio', () => {
+    expect(activeFilterChips({ categoryCode: 'X9' })[0].label).toBe('X9');
+  });
+
+  it('hasAnySearch distingue busca vazia de busca sem chips', () => {
+    expect(hasAnySearch({})).toBe(false);
+  });
+});
+
+describe('mineActiveFilters', () => {
+  it('não mostra chip no estado padrão de cada segmento', () => {
+    expect(
+      mineActiveFilters({ view: 'matches', role: 'all', box: 'received' }),
+    ).toEqual([]);
+    expect(
+      mineActiveFilters({ view: 'invites', role: 'all', box: 'received' }),
+    ).toEqual([]);
+  });
+
+  it('mostra papel e situação da partida, cada um com seu reset', () => {
+    expect(
+      mineActiveFilters({
+        view: 'matches',
+        role: 'creator',
+        box: 'received',
+        status: 'OPEN',
+      }),
+    ).toEqual([
+      { key: 'role', label: 'Que eu organizo', clear: { role: 'all' } },
+      { key: 'status', label: 'Aberta', clear: { status: undefined } },
+    ]);
+  });
+
+  it('em candidaturas ignora o papel e usa o rótulo de participante', () => {
+    expect(
+      mineActiveFilters({
+        view: 'applications',
+        role: 'creator',
+        box: 'received',
+        status: 'PENDING',
+      }),
+    ).toEqual([
+      { key: 'status', label: 'Pendente', clear: { status: undefined } },
+    ]);
+  });
+
+  it('em convites mostra a caixa enviada e o rótulo de convite', () => {
+    expect(
+      mineActiveFilters({
+        view: 'invites',
+        role: 'all',
+        box: 'sent',
+        status: 'ACCEPTED',
+      }),
+    ).toEqual([
+      { key: 'box', label: 'Enviados', clear: { box: 'received' } },
+      { key: 'status', label: 'Aceito', clear: { status: undefined } },
+    ]);
   });
 });

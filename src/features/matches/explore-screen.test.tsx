@@ -1,3 +1,4 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
 import { api } from '@/lib/api-client';
@@ -60,12 +61,50 @@ const mockApi = (
 beforeEach(() => {
   seedToken();
   resetLocated();
+  mockSetParams.mockClear();
   mockParams = { state: 'SC', city: 'Florianópolis' };
   mockSession({ status: 'signed-in', user: makeUser() });
 });
 afterEach(() => jest.restoreAllMocks());
 
 describe('ExploreScreen', () => {
+  it('mostra o filtro aplicado como chip e o remove em um toque', async () => {
+    mockApi();
+    mockParams = { city: 'Blumenau', state: 'SC' };
+    renderWithQuery(<ExploreScreen />);
+    const chip = await screen.findByLabelText('Remover filtro Blumenau · SC');
+    fireEvent.press(chip);
+    expect(mockSetParams).toHaveBeenCalledWith(
+      expect.objectContaining({ city: '', state: '' }),
+    );
+  });
+
+  it('o contador do botão ignora a modalidade', async () => {
+    mockApi();
+    mockParams = { sportId: '1' };
+    renderWithQuery(<ExploreScreen />);
+    expect(await screen.findByText('Filtros')).toBeOnTheScreen();
+    expect(mockSetParams).not.toHaveBeenCalled();
+  });
+
+  it('não recoloca a cidade após remover o último filtro de um link direto', async () => {
+    mockApi();
+    mockParams = { city: 'Blumenau', state: 'SC' };
+    const view = renderWithQuery(<ExploreScreen />);
+    fireEvent.press(
+      await screen.findByLabelText('Remover filtro Blumenau · SC'),
+    );
+    expect(mockSetParams).toHaveBeenCalledTimes(1);
+
+    mockParams = {};
+    view.rerender(
+      <QueryClientProvider client={view.queryClient}>
+        <ExploreScreen />
+      </QueryClientProvider>,
+    );
+    expect(mockSetParams).toHaveBeenCalledTimes(1);
+  });
+
   it('na primeira visita sem filtros começa na cidade do jogador', async () => {
     mockParams = {};
     mockApi();
@@ -101,6 +140,19 @@ describe('ExploreScreen', () => {
     );
   });
 
+  it('trata a modalidade como filtro no vazio, mesmo fora do contador', async () => {
+    mockParams = { sportId: '1' };
+    mockApi([makePage([])]);
+    renderWithQuery(<ExploreScreen />);
+    expect(
+      await screen.findByText('Nenhuma partida com esses filtros'),
+    ).toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Limpar filtros'));
+    expect(mockSetParams).toHaveBeenCalledWith(
+      expect.objectContaining({ sportId: '' }),
+    );
+  });
+
   it('lista as partidas com os filtros da URL e abre o detalhe', async () => {
     const spy = mockApi();
     renderWithQuery(<ExploreScreen />);
@@ -113,7 +165,7 @@ describe('ExploreScreen', () => {
       city: 'Florianópolis',
       limit: 20,
     });
-    expect(screen.getByText('Filtros (2)')).toBeOnTheScreen();
+    expect(screen.getByText('Filtros (1)')).toBeOnTheScreen();
     fireEvent.press(screen.getByLabelText('Padel de sábado'));
     expect(mockPush).toHaveBeenCalledWith(`/matches/${match.id}`);
   });
@@ -145,7 +197,7 @@ describe('ExploreScreen', () => {
   it('aplica filtros da folha nos params', async () => {
     mockApi();
     renderWithQuery(<ExploreScreen />);
-    fireEvent.press(await screen.findByText('Filtros (2)'));
+    fireEvent.press(await screen.findByText('Filtros (1)'));
     fireEvent.press(await screen.findByRole('button', { name: 'Formato' }));
     fireEvent.press(await screen.findByText('1v1 · Simples'));
     fireEvent.press(screen.getByText('Aplicar filtros'));

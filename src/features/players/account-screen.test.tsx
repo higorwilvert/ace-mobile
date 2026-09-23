@@ -11,18 +11,32 @@ import { AccountScreen } from './account-screen';
 
 jest.mock('@/features/auth/session');
 const mockReplace = jest.fn();
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
-  useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
+  useRouter: () => ({ replace: mockReplace, push: mockPush }),
 }));
 
 beforeEach(async () => {
+  mockPush.mockClear();
   mockSession({ status: 'signed-in', user: makeUser() });
   await seedToken();
 });
 afterEach(() => jest.restoreAllMocks());
 
 describe('AccountScreen', () => {
+  it('leva aos ajustes de perfil que saíram da aba Perfil', async () => {
+    renderWithQuery(<AccountScreen />);
+    for (const [label, href] of [
+      ['Dados pessoais', '/personal'],
+      ['Meus esportes', '/sports'],
+      ['Disponibilidade', '/availability'],
+    ] as const) {
+      fireEvent.press(await screen.findByText(label));
+      expect(mockPush).toHaveBeenCalledWith(href);
+    }
+  });
+
   it('mostra o e-mail e sai pela sessão', async () => {
     const session = mockSession({ status: 'signed-in', user: makeUser() });
     renderWithQuery(<AccountScreen />);

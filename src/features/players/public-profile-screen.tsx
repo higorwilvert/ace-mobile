@@ -1,6 +1,13 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronRight, Lock, UserPlus, Users } from 'lucide-react-native';
+import {
+  ChevronRight,
+  Lock,
+  Settings,
+  TrendingUp,
+  UserPlus,
+  Users,
+} from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -18,6 +25,8 @@ import { InviteToMatchSheet } from '@/features/invites/invite-to-match-sheet';
 import { historyQuery, summaryQuery } from '@/features/results/api';
 import { HistoryEntryCard } from '@/features/results/history-entry';
 import { TotalsTiles } from '@/features/results/totals-tiles';
+import { useInboxCount } from '@/hooks/use-inbox-count';
+import { useRefetchOnFocus } from '@/hooks/use-refetch-on-focus';
 import type { PublicProfile } from '@/types/api';
 
 import { playerProfileQuery } from './api';
@@ -112,16 +121,54 @@ function SportCard({
   );
 }
 
-export function PublicProfileScreen() {
-  const { userId } = useLocalSearchParams<{ userId: string }>();
+function OwnProfileActions() {
+  const router = useRouter();
+  const inbox = useInboxCount();
+  const badge = inbox.label(inbox.friendRequests);
+  return (
+    <View className='flex-row justify-end gap-2'>
+      <Pressable
+        accessibilityRole='button'
+        accessibilityLabel='Jogadores e amigos'
+        hitSlop={8}
+        className='h-11 w-11 items-center justify-center rounded-card bg-brand-muted active:opacity-70'
+        onPress={() => router.push('/players')}
+      >
+        <Users size={20} color={palette.colors.brand} />
+        {badge && (
+          <View className='absolute -right-1 -top-1 min-w-5 items-center rounded-pill bg-brand px-1.5'>
+            <Text className='font-inter-semibold text-xs text-white'>
+              {badge}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+      <Pressable
+        accessibilityRole='button'
+        accessibilityLabel='Conta e configurações'
+        hitSlop={8}
+        className='h-11 w-11 items-center justify-center rounded-card bg-brand-muted active:opacity-70'
+        onPress={() => router.push('/account')}
+      >
+        <Settings size={20} color={palette.colors.brand} />
+      </Pressable>
+    </View>
+  );
+}
+
+export function PublicProfileScreen({ userId: own }: { userId?: string } = {}) {
+  const params = useLocalSearchParams<{ userId: string }>();
+  const userId = own ?? params.userId;
   const { user } = useSession();
   const router = useRouter();
   const player = useQuery(playerProfileQuery(userId ?? ''));
+  useRefetchOnFocus(player.refetch);
   const [inviteOpen, setInviteOpen] = useState(false);
   if (player.isPending) return <LoadingState />;
   if (player.isError)
     return <ErrorState error={player.error} retry={() => player.refetch()} />;
   const data = player.data;
+  const isMe = user?.id === data.id;
   // Convite não depende de amizade nem de perfil público (T08/T31).
   const canInvite = user !== null && user.id !== data.id;
   // Bloco social (T33): só de `relationship`; o próprio perfil não tem botão.
@@ -132,7 +179,8 @@ export function PublicProfileScreen() {
   const friendsLabel = `${data.friendsCount} ${data.friendsCount === 1 ? 'amigo' : 'amigos'}`;
   const mutedColor = palette.colors['muted-foreground'];
   return (
-    <Screen scroll edges={['bottom']} className='gap-5 pt-4'>
+    <Screen scroll edges={own ? ['top'] : ['bottom']} className='gap-5 pt-4'>
+      {isMe && <OwnProfileActions />}
       <View className='items-center gap-2'>
         <Avatar name={data.fullName} url={data.avatarUrl} size={96} />
         <Text variant='title' className='text-center'>
@@ -246,6 +294,18 @@ export function PublicProfileScreen() {
               data.sportProfiles.map((profile) => (
                 <SportCard key={profile.sportId} profile={profile} />
               ))
+            )}
+            {isMe && (
+              <Pressable
+                accessibilityRole='link'
+                className='flex-row items-center justify-center gap-1 py-1 active:opacity-70'
+                onPress={() => router.push('/rating')}
+              >
+                <TrendingUp size={16} color={palette.colors.brand} />
+                <Text className='font-inter-medium text-sm text-brand'>
+                  Ver evolução do rating
+                </Text>
+              </Pressable>
             )}
           </View>
           <View className='gap-3'>

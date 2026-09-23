@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-import { dayLabels } from '@/features/players/labels';
+import { inviteStatusLabels } from '@/features/invites/schemas';
+import {
+  categoryOptions,
+  dayLabels,
+  policyLabels,
+} from '@/features/players/labels';
 import { plainText } from '@/lib/input-schemas';
 import { isUf, UFS } from '@/lib/locations';
 import {
@@ -582,8 +587,73 @@ export const matchesSearchSchema = z.object({
   dateTo: optional(dateInput),
 });
 export type MatchesSearch = z.infer<typeof matchesSearchSchema>;
-export const activeFilterCount = (search: MatchesSearch) =>
-  Object.values(search).filter((v) => v !== undefined).length;
+export type FilterChip = {
+  key: string;
+  label: string;
+  clear: Partial<MatchesSearch>;
+};
+/** "2026-09-30" → "30/09". */
+const shortDate = (value: string) => {
+  const [, month, day] = value.split('-');
+  return `${day}/${month}`;
+};
+/** Um chip por campo da folha; modalidade já aparece nos chips acima. */
+export function activeFilterChips(
+  search: MatchesSearch,
+  sport?: Sport,
+): FilterChip[] {
+  const chips: FilterChip[] = [];
+  if (search.teamSize !== undefined)
+    chips.push({
+      key: 'teamSize',
+      label: formatShort(search.teamSize),
+      clear: { teamSize: undefined },
+    });
+  if (search.city !== undefined)
+    chips.push({
+      key: 'city',
+      label: search.state ? `${search.city} · ${search.state}` : search.city,
+      clear: { city: undefined, state: undefined },
+    });
+  else if (search.state !== undefined)
+    chips.push({
+      key: 'state',
+      label: search.state,
+      clear: { state: undefined },
+    });
+  if (search.categoryCode !== undefined)
+    chips.push({
+      key: 'categoryCode',
+      label:
+        categoryOptions(sport).find((o) => o.value === search.categoryCode)
+          ?.label ?? search.categoryCode,
+      clear: { categoryCode: undefined },
+    });
+  if (search.genderPolicy !== undefined)
+    chips.push({
+      key: 'genderPolicy',
+      label: policyLabels[search.genderPolicy],
+      clear: { genderPolicy: undefined },
+    });
+  if (search.dateFrom !== undefined)
+    chips.push({
+      key: 'dateFrom',
+      label: `De ${shortDate(search.dateFrom)}`,
+      clear: { dateFrom: undefined },
+    });
+  if (search.dateTo !== undefined)
+    chips.push({
+      key: 'dateTo',
+      label: `Até ${shortDate(search.dateTo)}`,
+      clear: { dateTo: undefined },
+    });
+  return chips;
+}
+export const activeFilterCount = (search: MatchesSearch, sport?: Sport) =>
+  activeFilterChips(search, sport).length;
+/** Inclui modalidade mesmo sem chip de resumo. */
+export const hasAnySearch = (search: MatchesSearch) =>
+  Object.values(search).some((value) => value !== undefined);
 
 export const mineViews = ['matches', 'applications', 'invites'] as const;
 export const mineRoles = ['all', 'creator', 'participant'] as const;
@@ -615,6 +685,40 @@ export type MineSearch = {
   box: (typeof mineBoxes)[number];
   status?: MatchStatus | ParticipantStatus | InviteStatus;
 };
+export type MineFilterChip = {
+  key: string;
+  label: string;
+  clear: Partial<MineSearch>;
+};
+export const mineRoleLabels: Record<MineSearch['role'], string> = {
+  all: 'Todas',
+  creator: 'Que eu organizo',
+  participant: 'Que eu participo',
+};
+/** Os campos ativos dependem do segmento da aba Minhas. */
+export function mineActiveFilters(search: MineSearch): MineFilterChip[] {
+  const chips: MineFilterChip[] = [];
+  if (search.view === 'matches' && search.role !== 'all')
+    chips.push({
+      key: 'role',
+      label: mineRoleLabels[search.role],
+      clear: { role: 'all' },
+    });
+  if (search.view === 'invites' && search.box === 'sent')
+    chips.push({ key: 'box', label: 'Enviados', clear: { box: 'received' } });
+  if (search.status !== undefined)
+    chips.push({
+      key: 'status',
+      label:
+        search.view === 'matches'
+          ? matchStatusLabels[search.status as MatchStatus]
+          : search.view === 'applications'
+            ? participantStatusLabels[search.status as ParticipantStatus]
+            : inviteStatusLabels[search.status as InviteStatus],
+      clear: { status: undefined },
+    });
+  return chips;
+}
 
 export const UF_OPTIONS = UFS.map((uf) => ({ value: uf, label: uf }));
 export const teamIndexes: TeamIndex[] = [1, 2];

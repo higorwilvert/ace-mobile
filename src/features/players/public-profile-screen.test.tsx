@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 
 import { api } from '@/lib/api-client';
 import {
@@ -16,22 +16,72 @@ import { PublicProfileScreen } from './public-profile-screen';
 
 const profile = makePublicProfile();
 jest.mock('@/features/auth/session');
+jest.mock('@/hooks/use-inbox-count', () => ({
+  useInboxCount: () => ({
+    friendRequests: 2,
+    label: (count: number) => (count > 0 ? String(count) : undefined),
+  }),
+}));
 const mockPush = jest.fn();
+let mockFocus: (() => void) | undefined;
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
   useLocalSearchParams: () => ({
     userId: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f',
   }),
+  useFocusEffect: (effect: () => void) => {
+    const { useEffect } = jest.requireActual<typeof import('react')>('react');
+    useEffect(() => {
+      mockFocus = effect;
+      effect();
+    }, [effect]);
+  },
 }));
 
 beforeEach(() => {
+  mockPush.mockClear();
+  mockFocus = undefined;
   seedToken();
   mockSession({ status: 'signed-in', user: makeUser() });
 });
 afterEach(() => jest.restoreAllMocks());
 
 describe('PublicProfileScreen', () => {
+  it('atualiza o perfil próprio ao voltar da edição', async () => {
+    const me = makeUser();
+    let profileLoads = 0;
+    jest
+      .spyOn(api, 'request')
+      .mockImplementation((config: { url?: string }) => {
+        const url = String(config.url);
+        if (url.endsWith('/history/summary'))
+          return Promise.resolve({
+            status: 200,
+            data: { data: [makeTotals()] },
+          });
+        if (url.endsWith('/history'))
+          return Promise.resolve({ status: 200, data: makePage([]) });
+        profileLoads += 1;
+        return Promise.resolve({
+          status: 200,
+          data: {
+            data: makePublicProfile({
+              id: me.id,
+              fullName: me.fullName,
+              bio: profileLoads === 1 ? 'Bio anterior' : 'Bio atualizada',
+            }),
+          },
+        });
+      });
+    renderWithQuery(<PublicProfileScreen userId={me.id} />);
+    expect(await screen.findByText('Bio anterior')).toBeOnTheScreen();
+    expect(profileLoads).toBe(1);
+    act(() => mockFocus?.());
+    expect(await screen.findByText('Bio atualizada')).toBeOnTheScreen();
+    expect(profileLoads).toBe(2);
+  });
+
   it('mostra carregando', () => {
     jest.spyOn(api, 'request').mockReturnValue(new Promise(() => {}));
     renderWithQuery(<PublicProfileScreen />);
@@ -222,6 +272,68 @@ describe('PublicProfileScreen', () => {
     expect(screen.queryByText('Adicionar')).not.toBeOnTheScreen();
     expect(screen.queryByText('Convidar para partida')).not.toBeOnTheScreen();
     expect(screen.getByText('4 amigos')).toBeOnTheScreen();
+  });
+
+  it('no perfil próprio mostra jogadores, conta, badge de pedidos e rating', async () => {
+    const me = makeUser();
+    const spy = jest
+      .spyOn(api, 'request')
+      .mockImplementation((config: { url?: string }) => {
+        const url = String(config.url);
+        if (url.endsWith('/history/summary'))
+          return Promise.resolve({
+            status: 200,
+            data: { data: [makeTotals()] },
+          });
+        if (url.endsWith('/history'))
+          return Promise.resolve({ status: 200, data: makePage([]) });
+        return Promise.resolve({
+          status: 200,
+          data: {
+            data: makePublicProfile({ id: me.id, fullName: me.fullName }),
+          },
+        });
+      });
+    renderWithQuery(<PublicProfileScreen userId={me.id} />);
+    const players = await screen.findByRole('button', {
+      name: 'Jogadores e amigos',
+    });
+    expect(spy.mock.calls.map(([config]) => String(config.url))).toContain(
+      `/v1/users/${me.id}/profile`,
+    );
+    expect(within(players).getByText('2')).toBeOnTheScreen();
+    fireEvent.press(players);
+    expect(mockPush).toHaveBeenCalledWith('/players');
+    fireEvent.press(
+      screen.getByRole('button', { name: 'Conta e configurações' }),
+    );
+    expect(mockPush).toHaveBeenCalledWith('/account');
+    fireEvent.press(
+      screen.getByRole('link', { name: 'Ver evolução do rating' }),
+    );
+    expect(mockPush).toHaveBeenCalledWith('/rating');
+  });
+
+  it('no perfil de outro jogador não mostra os atalhos próprios', async () => {
+    jest
+      .spyOn(api, 'request')
+      .mockImplementation((config: { url?: string }) => {
+        const url = String(config.url);
+        if (url.endsWith('/history/summary'))
+          return Promise.resolve({
+            status: 200,
+            data: { data: [makeTotals()] },
+          });
+        if (url.endsWith('/history'))
+          return Promise.resolve({ status: 200, data: makePage([]) });
+        return Promise.resolve({ status: 200, data: { data: profile } });
+      });
+    renderWithQuery(<PublicProfileScreen />);
+    await screen.findByText('Modalidades');
+    expect(screen.queryByLabelText('Jogadores e amigos')).toBeNull();
+    expect(screen.queryByLabelText('Conta e configurações')).toBeNull();
+    expect(screen.queryByText('Ver evolução do rating')).toBeNull();
+    expect(screen.getByText('Convidar para partida')).toBeOnTheScreen();
   });
 
   it('mostra jogador indisponível em 404', async () => {

@@ -1,8 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'expo-router';
-import { LogOut, ShieldAlert } from 'lucide-react-native';
+import { Link, useRouter } from 'expo-router';
+import {
+  CalendarClock,
+  ChevronRight,
+  LogOut,
+  ShieldAlert,
+  Trophy,
+  UserRound,
+} from 'lucide-react-native';
 import { type ReactNode, useState } from 'react';
-import { Switch, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import { toast } from 'sonner-native';
 
 import { FormError } from '@/components/ace/states';
@@ -21,6 +28,47 @@ import { sessionToken } from '@/lib/token';
 import { deactivateAccount, setVisibility } from './api';
 
 const CONFIRM_WORD = 'DESATIVAR';
+const shortcuts = [
+  {
+    label: 'Dados pessoais',
+    hint: 'Nome, cidade, foto e bio',
+    href: '/personal',
+    Icon: UserRound,
+  },
+  {
+    label: 'Meus esportes',
+    hint: 'Modalidades, categoria e principal',
+    href: '/sports',
+    Icon: Trophy,
+  },
+  {
+    label: 'Disponibilidade',
+    hint: 'Seus horários na semana',
+    href: '/availability',
+    Icon: CalendarClock,
+  },
+] as const;
+
+function ShortcutRow({ label, hint, href, Icon }: (typeof shortcuts)[number]) {
+  const router = useRouter();
+  return (
+    <Pressable
+      accessibilityRole='button'
+      className='flex-row items-center gap-3 rounded-panel border border-border bg-card p-4 active:bg-brand-muted'
+      onPress={() => router.push(href)}
+    >
+      <View className='h-10 w-10 items-center justify-center rounded-card bg-brand-muted'>
+        <Icon size={20} color={palette.colors.brand} />
+      </View>
+      <View className='flex-1 gap-0.5'>
+        <Text variant='label'>{label}</Text>
+        <Text variant='muted'>{hint}</Text>
+      </View>
+      <ChevronRight size={18} color={palette.colors['muted-foreground']} />
+    </Pressable>
+  );
+}
+
 function Panel({
   title,
   children,
@@ -92,6 +140,12 @@ export function AccountScreen() {
   const isPrivate = privateOverride ?? serverPrivate;
   return (
     <Screen scroll edges={['bottom']} className='gap-4 pt-4'>
+      <View className='gap-2'>
+        {shortcuts.map((item) => (
+          <ShortcutRow key={item.label} {...item} />
+        ))}
+      </View>
+
       <Panel title='Acesso'>
         <View className='gap-0.5'>
           <Text variant='muted'>E-mail da conta</Text>
