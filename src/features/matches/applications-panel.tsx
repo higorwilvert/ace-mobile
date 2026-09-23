@@ -199,12 +199,23 @@ function ApplicationRow({
 }
 
 /** Painel do criador: pendentes (aprovar em um time / recusar) e recusadas. */
-export function ApplicationsPanel({ match }: { match: MatchDetail }) {
-  const [tab, setTab] = useState<'PENDING' | 'DECLINED'>('PENDING');
-  const pending = useQuery(applicationsQuery(match.id, 'PENDING'));
+export function ApplicationsPanel({
+  match,
+  historyOnly = false,
+}: {
+  match: MatchDetail;
+  historyOnly?: boolean;
+}) {
+  const [tab, setTab] = useState<'PENDING' | 'DECLINED'>(
+    historyOnly ? 'DECLINED' : 'PENDING',
+  );
+  const pending = useQuery({
+    ...applicationsQuery(match.id, 'PENDING'),
+    enabled: !historyOnly,
+  });
   const declined = useQuery({
     ...applicationsQuery(match.id, 'DECLINED'),
-    enabled: tab === 'DECLINED',
+    enabled: historyOnly || tab === 'DECLINED',
   });
   const approve = useMatchMutation(
     ({ id, teamIndex }: { id: string; teamIndex?: TeamIndex }) =>
@@ -226,11 +237,13 @@ export function ApplicationsPanel({ match }: { match: MatchDetail }) {
     <View className='gap-3 rounded-panel border border-border bg-card p-4'>
       <View className='gap-0.5'>
         <Text className='font-inter-semibold text-xs uppercase tracking-widest text-brand'>
-          Quem quer jogar
+          {historyOnly ? 'Histórico' : 'Quem quer jogar'}
         </Text>
         <View className='flex-row items-center gap-2'>
-          <Text variant='subtitle'>Candidaturas</Text>
-          {pendingCount > 0 && (
+          <Text variant='subtitle'>
+            {historyOnly ? 'Candidaturas recusadas' : 'Candidaturas'}
+          </Text>
+          {!historyOnly && pendingCount > 0 && (
             <View className='min-w-6 items-center rounded-pill bg-brand px-1.5 py-0.5'>
               <Text className='font-inter-bold text-xs text-white'>
                 {pendingCount}
@@ -238,21 +251,25 @@ export function ApplicationsPanel({ match }: { match: MatchDetail }) {
             </View>
           )}
         </View>
-        <Text variant='muted'>Você decide quem entra e em qual time.</Text>
+        {!historyOnly && (
+          <Text variant='muted'>Você decide quem entra e em qual time.</Text>
+        )}
       </View>
-      <View className='flex-row gap-2'>
-        <Chip
-          label='Pendentes'
-          active={tab === 'PENDING'}
-          onPress={() => setTab('PENDING')}
-        />
-        <Chip
-          label='Recusadas'
-          active={tab === 'DECLINED'}
-          onPress={() => setTab('DECLINED')}
-        />
-      </View>
-      {full && tab === 'PENDING' && (
+      {!historyOnly && (
+        <View className='flex-row gap-2'>
+          <Chip
+            label='Pendentes'
+            active={tab === 'PENDING'}
+            onPress={() => setTab('PENDING')}
+          />
+          <Chip
+            label='Recusadas'
+            active={tab === 'DECLINED'}
+            onPress={() => setTab('DECLINED')}
+          />
+        </View>
+      )}
+      {!historyOnly && full && tab === 'PENDING' && (
         <View className='rounded-card bg-brand-muted p-3'>
           <Text variant='muted' className='text-brand'>
             Times completos. Se uma vaga abrir, as candidaturas pendentes voltam

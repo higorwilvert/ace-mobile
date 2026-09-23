@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { makeMatchDetail, otherPlayer } from '@/test/fixtures';
+import { makeMatchDetail, makeSport, otherPlayer } from '@/test/fixtures';
 
 import { CourtBoard, FormatChoice } from './court-board';
 import { matchPermissions } from './schemas';
@@ -33,6 +33,64 @@ const withGuest = makeMatchDetail({
 });
 
 describe('CourtBoard', () => {
+  it.each([
+    ['padel', 'Padel', 2],
+    ['beach_tennis', 'Beach tennis', 2],
+    ['tenis', 'Tênis', 1],
+    ['tenis', 'Tênis', 2],
+    ['pickleball', 'Pickleball', 1],
+    ['pickleball', 'Pickleball', 2],
+  ] as const)(
+    'mostra %s %iv%i com vagas nos dois times',
+    (slug, name, teamSize) => {
+      const match = makeMatchDetail({
+        sport: makeSport({ slug, name, supportsSingles: teamSize === 1 }),
+        teamSize,
+        capacity: {
+          teamSize,
+          total: teamSize * 2,
+          confirmed: 1,
+          available: teamSize * 2 - 1,
+        },
+        viewer: outsider.viewer,
+      });
+      render(
+        <CourtBoard
+          match={match}
+          permissions={matchPermissions(match)}
+          onPickSlot={jest.fn()}
+        />,
+      );
+      expect(
+        screen.getByText(`1 de ${teamSize * 2} confirmados`),
+      ).toBeOnTheScreen();
+      expect(screen.getAllByText('Candidatar-me a esta vaga')).toHaveLength(
+        teamSize * 2 - 1,
+      );
+      expect(screen.getByLabelText('Time 1')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Time 2')).toBeOnTheScreen();
+    },
+  );
+
+  it.each([
+    ['MALE', 'Vaga masculina'],
+    ['FEMALE', 'Vaga feminina'],
+    ['OPEN', 'Vaga livre'],
+    ['MIXED', 'Um homem e uma mulher por time'],
+  ] as const)('explica a composição %s', (genderPolicy, label) => {
+    const match = makeMatchDetail({ ...outsider, genderPolicy });
+    render(
+      <CourtBoard
+        match={match}
+        permissions={matchPermissions(match)}
+        onPickSlot={jest.fn()}
+      />,
+    );
+    expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+    if (genderPolicy === 'MIXED') {
+      expect(screen.getAllByText('Dupla mista')).toHaveLength(3);
+    }
+  });
   it('oferece as vagas livres a quem pode se candidatar e mostra o resumo', () => {
     const onPickSlot = jest.fn();
     render(
@@ -43,7 +101,7 @@ describe('CourtBoard', () => {
       />,
     );
     expect(screen.getByText('1 de 4 confirmados')).toBeOnTheScreen();
-    expect(screen.getAllByText('Quero jogar aqui')).toHaveLength(3);
+    expect(screen.getAllByText('Candidatar-me a esta vaga')).toHaveLength(3);
     fireEvent.press(screen.getAllByLabelText('Quero jogar no Time 2')[0]);
     expect(onPickSlot).toHaveBeenCalledWith(2);
   });
@@ -57,8 +115,10 @@ describe('CourtBoard', () => {
         onPickSlot={jest.fn()}
       />,
     );
-    expect(screen.queryByText('Quero jogar aqui')).not.toBeOnTheScreen();
-    expect(screen.getAllByText('Vaga')).toHaveLength(3);
+    expect(
+      screen.queryByText('Candidatar-me a esta vaga'),
+    ).not.toBeOnTheScreen();
+    expect(screen.getAllByText('Vaga disponível')).toHaveLength(3);
   });
 
   it('deixa o criador remover só quem não é criador e abre perfis', () => {

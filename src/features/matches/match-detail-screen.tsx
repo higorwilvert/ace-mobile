@@ -51,12 +51,15 @@ import { cn, firstName } from '@/lib/utils';
 
 import {
   applyToMatch,
+  applicationsQuery,
+  approveApplication,
   cancelMatch,
   type MatchDetail,
   type MatchParticipant,
   matchQuery,
   publishMatch,
   removeParticipant,
+  rejectApplication,
   type TeamIndex,
   withdrawApplication,
 } from './api';
@@ -66,6 +69,7 @@ import { Badge, StatusBadge } from './match-card';
 import {
   durationLabel,
   formatShort,
+  formatWhen,
   formatWhenLong,
   type MatchPermissions,
   matchPermissions,
@@ -144,7 +148,6 @@ function ViewerBanner({
   match,
   permissions,
   viewerId,
-  onWithdraw,
   onAcceptInvite,
   onDeclineInvite,
   busy,
@@ -152,7 +155,6 @@ function ViewerBanner({
   match: MatchDetail;
   permissions: MatchPermissions;
   viewerId: string;
-  onWithdraw: () => void;
   onAcceptInvite: () => void;
   onDeclineInvite: () => void;
   busy: boolean;
@@ -243,14 +245,6 @@ function ViewerBanner({
           {text}
         </Text>
       </View>
-      {permissions.canWithdraw && (
-        <Button
-          variant='secondary'
-          label='Retirar candidatura'
-          disabled={busy}
-          onPress={onWithdraw}
-        />
-      )}
       {inviteRules && (inviteRules.canAccept || inviteRules.canDecline) && (
         <View className='flex-row gap-2'>
           {inviteRules.canAccept && (
@@ -310,7 +304,20 @@ export function MatchDetailScreen() {
   useRefetchOnFocus(match.refetch);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteTeam, setInviteTeam] = useState<TeamIndex | undefined>();
+  const [selectedTeam, setSelectedTeam] = useState<TeamIndex | null>(null);
+  const [activeApplicationId, setActiveApplicationId] = useState<string | null>(
+    null,
+  );
+  const [showHistory, setShowHistory] = useState(false);
   const [reason, setReason] = useState('');
+  const applications = useQuery({
+    ...applicationsQuery(matchId, 'PENDING'),
+    enabled:
+      valid &&
+      !!match.data?.viewer?.isCreator &&
+      (match.data?.status === 'OPEN' || match.data?.status === 'CONFIRMED'),
+  });
 
   const apply = useMatchMutation(
     (teamIndex: TeamIndex | undefined) =>
@@ -320,11 +327,25 @@ export function MatchDetailScreen() {
         result.data.teamIndex
           ? `Candidatura enviada para o Time ${result.data.teamIndex}.`
           : 'Candidatura enviada.',
+      toastError: false,
     },
   );
   const withdraw = useMatchMutation(() => withdrawApplication(matchId), {
     success: 'Candidatura retirada.',
+    toastError: false,
   });
+  const approve = useMatchMutation(
+    ({ id, teamIndex }: { id: string; teamIndex: TeamIndex }) =>
+      approveApplication(matchId, id, { teamIndex }),
+    { success: 'Jogador confirmado no time.', toastError: false },
+  );
+  const reject = useMatchMutation(
+    (id: string) => rejectApplication(matchId, id),
+    {
+      success: 'Candidatura recusada.',
+      toastError: false,
+    },
+  );
   const { user } = useSession();
   const inviteId = match.data?.viewer?.invite?.id ?? '';
   const acceptInvitation = useInviteMutation(
@@ -359,6 +380,8 @@ export function MatchDetailScreen() {
   const busy =
     apply.isPending ||
     withdraw.isPending ||
+    approve.isPending ||
+    reject.isPending ||
     publish.isPending ||
     remove.isPending ||
     acceptInvitation.isPending ||
@@ -443,6 +466,18 @@ export function MatchDetailScreen() {
               }
             />
           </View>
+          <View className='gap-1 pt-1'>
+            <View className='flex-row items-center gap-1.5'>
+              <CalendarDays size={14} color={muted} />
+              <Text variant='muted'>{formatWhen(m.scheduledAt)}</Text>
+            </View>
+            <View className='flex-row items-center gap-1.5'>
+              <MapPin size={14} color={muted} />
+              <Text variant='muted' numberOfLines={1}>
+                {m.arena?.name ?? m.locationText ?? `${m.city}, ${m.state}`}
+              </Text>
+            </View>
+          </View>
         </View>
         <SportIcon slug={m.sport.slug} size={52} />
       </View>
@@ -451,13 +486,10 @@ export function MatchDetailScreen() {
         match={m}
         permissions={permissions}
         viewerId={user?.id ?? ''}
-        onWithdraw={confirmWithdraw}
         onAcceptInvite={() => acceptInvitation.mutate(undefined)}
         onDeclineInvite={confirmDecline}
         busy={busy}
       />
-
-      <ResultPanel match={m} />
 
       <Panel eyebrow='Em quadra' title='Times e vagas'>
         <CourtBoard
@@ -466,11 +498,30 @@ export function MatchDetailScreen() {
           onPickSlot={(teamIndex) =>
             permissions.canAcceptInvite
               ? acceptInvitation.mutate(teamIndex)
-              : apply.mutate(teamIndex)
+              : setSelectedTeam(teamIndex)
           }
+          onInviteSlot={(teamIndex) => {
+            setInviteTeam(teamIndex);
+            setInviteOpen(true);
+          }}
+          onWithdraw={confirmWithdraw}
+          applications={applications.data ?? []}
+          applicationsLoading={applications.isPending || applications.isError}
+          actionError={approve.error ?? reject.error}
+          activeApplicationId={activeApplicationId}
+          onApprove={(application, teamIndex) => {
+            setActiveApplicationId(application.id);
+            approve.mutate({ id: application.id, teamIndex });
+          }}
+          onReject={(application) => {
+            setActiveApplicationId(application.id);
+            reject.mutate(application.id);
+          }}
           onRemove={confirmRemove}
           busy={busy}
         />
+        {applications.isError && <FormError error={applications.error} />}
+        <FormError error={withdraw.error} />
         {permissions.canRecordResult && (
           <Button
             label='Registrar placar'
@@ -478,23 +529,26 @@ export function MatchDetailScreen() {
             onPress={() => router.push(`/matches/${m.id}/result`)}
           />
         )}
-        {permissions.canApply && (
-          <View className='gap-2 pt-1'>
-            <Button
-              label='Candidatar-se'
-              busy={apply.isPending}
-              busyLabel='Enviando…'
-              disabled={busy}
-              icon={<Send size={17} color='#fff' />}
-              onPress={() => apply.mutate(undefined)}
-            />
-            <Text variant='muted' className='text-center'>
-              Prefere um time? Toque numa vaga livre para escolher. O criador
-              decide quem entra.
-            </Text>
-          </View>
-        )}
       </Panel>
+
+      <ResultPanel match={m} />
+      {isCreator && permissions.canManage && (
+        <View className='gap-2'>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel={
+              showHistory ? 'Ocultar recusadas' : 'Ver candidaturas recusadas'
+            }
+            onPress={() => setShowHistory((value) => !value)}
+            className='min-h-10 justify-center'
+          >
+            <Text className='font-inter-semibold text-sm text-brand'>
+              {showHistory ? 'Ocultar recusadas' : 'Ver candidaturas recusadas'}
+            </Text>
+          </Pressable>
+          {showHistory && <ApplicationsPanel match={m} historyOnly />}
+        </View>
+      )}
 
       {m.description && (
         <Panel title='Sobre a partida'>
@@ -560,12 +614,11 @@ export function MatchDetailScreen() {
         </Fact>
       </Panel>
 
-      {isCreator && permissions.canManage && <ApplicationsPanel match={m} />}
       {isCreator && permissions.canManage && (
         <MatchInvitesPanel
           match={m}
-          canInvite={permissions.canInvite}
-          onInvite={() => setInviteOpen(true)}
+          canInvite={false}
+          onInvite={() => undefined}
         />
       )}
 
@@ -611,9 +664,46 @@ export function MatchDetailScreen() {
         <InviteSheet
           match={m}
           visible={inviteOpen}
+          initialTeamIndex={inviteTeam}
           onClose={() => setInviteOpen(false)}
         />
       )}
+
+      <Sheet
+        visible={selectedTeam !== null}
+        title={`Candidatar-se ao Time ${selectedTeam ?? ''}`}
+        onClose={() => {
+          if (!apply.isPending) {
+            setSelectedTeam(null);
+            apply.reset();
+          }
+        }}
+      >
+        <Text variant='muted'>
+          {`Sua candidatura ficará aguardando a aprovação de quem organiza. ${m.genderPolicy === 'MIXED' ? 'Cada time tem um homem e uma mulher.' : `Composição: ${policyLabels[m.genderPolicy]}.`}`}
+        </Text>
+        <FormError error={apply.error} />
+        <Button
+          label='Confirmar candidatura'
+          busy={apply.isPending}
+          busyLabel='Enviando…'
+          onPress={() =>
+            selectedTeam &&
+            apply.mutate(selectedTeam, {
+              onSuccess: () => setSelectedTeam(null),
+            })
+          }
+        />
+        <Button
+          variant='ghost'
+          label='Voltar'
+          disabled={apply.isPending}
+          onPress={() => {
+            setSelectedTeam(null);
+            apply.reset();
+          }}
+        />
+      </Sheet>
 
       <Sheet
         visible={cancelOpen}

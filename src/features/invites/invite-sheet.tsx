@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/text';
 import { TextField } from '@/components/ui/text-field';
 import palette from '@/config/palette.json';
 import { friendsQuery } from '@/features/friends/api';
-import type { MatchDetail } from '@/features/matches/api';
+import type { MatchDetail, TeamIndex } from '@/features/matches/api';
 import { searchPlayersQuery } from '@/features/players/api';
 import type { PublicUser } from '@/types/api';
 
@@ -60,10 +60,12 @@ function Row({
 export function InviteSheet({
   match,
   visible,
+  initialTeamIndex,
   onClose,
 }: {
   match: MatchDetail;
   visible: boolean;
+  initialTeamIndex?: TeamIndex;
   onClose: () => void;
 }) {
   const [term, setTerm] = useState('');
@@ -102,6 +104,7 @@ export function InviteSheet({
         <InviteComposer
           match={match}
           player={picked}
+          initialTeamIndex={initialTeamIndex}
           onBack={() => setPicked(null)}
           onSent={close}
         />

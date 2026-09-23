@@ -66,6 +66,33 @@ beforeEach(() => seedToken());
 afterEach(() => jest.restoreAllMocks());
 
 describe('InviteSheet', () => {
+  it('abre pela vaga com o time já selecionado', async () => {
+    const spy = mockApi();
+    renderWithQuery(
+      <InviteSheet
+        match={match}
+        visible
+        initialTeamIndex={2}
+        onClose={jest.fn()}
+      />,
+    );
+    fireEvent.changeText(screen.getByLabelText('Nome do jogador'), 'Ca');
+    fireEvent.press(await screen.findByLabelText('Convidar Carla Dias'));
+    expect(
+      screen.getByLabelText('Time 2').props.accessibilityState,
+    ).toMatchObject({ selected: true });
+    fireEvent.press(screen.getByText('Enviar convite'));
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'POST',
+          url: `/v1/matches/${match.id}/invites`,
+          data: { inviteeUserId: carla.id, teamIndex: 2 },
+        }),
+      ),
+    );
+  });
+
   it('busca pelo nome na modalidade, marca quem já está e envia com time e mensagem', async () => {
     const spy = mockApi();
     const onClose = jest.fn();

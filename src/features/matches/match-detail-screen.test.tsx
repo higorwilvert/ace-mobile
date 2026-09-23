@@ -98,8 +98,8 @@ describe('MatchDetailScreen', () => {
     expect(screen.getByRole('progressbar')).toBeOnTheScreen();
     expect(await screen.findByText('Padel de sábado')).toBeOnTheScreen();
     expect(
-      screen.getByText('Quadra 2 do Parque Ramiro Ruediger'),
-    ).toBeOnTheScreen();
+      screen.getAllByText('Quadra 2 do Parque Ramiro Ruediger'),
+    ).toHaveLength(2);
     expect(screen.getByText('Feminina')).toBeOnTheScreen();
     expect(screen.getByText('1h30')).toBeOnTheScreen();
   });
@@ -126,29 +126,180 @@ describe('MatchDetailScreen', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('terceiro se candidata tocando numa vaga e pelo botão', async () => {
+  it('terceiro se candidata tocando numa vaga e confirmando', async () => {
     const spy = mockApi(outsider);
     renderWithQuery(<MatchDetailScreen />);
-    fireEvent.press(await screen.findByText('Candidatar-se'));
+    fireEvent.press(
+      (await screen.findAllByLabelText('Quero jogar no Time 2'))[0],
+    );
+    expect(
+      await screen.findByText('Candidatar-se ao Time 2'),
+    ).toBeOnTheScreen();
+    expect(
+      spy.mock.calls.filter(([config]) => (config as Config).method === 'POST'),
+    ).toHaveLength(0);
+    fireEvent.press(screen.getByText('Confirmar candidatura'));
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     const posts = spy.mock.calls
       .map(([config]) => config as Config)
       .filter((c) => c.method === 'POST');
     expect(posts[0]).toMatchObject({
       url: `/v1/matches/${detail.id}/applications`,
-      data: {},
+      data: { teamIndex: 2 },
     });
-    fireEvent.press(screen.getAllByLabelText('Quero jogar no Time 2')[0]);
+    expect(screen.queryByText('Gerenciar')).not.toBeOnTheScreen();
+    expect(screen.queryByText('Aguardando decisão')).not.toBeOnTheScreen();
+  });
+
+  it('atualiza candidatura, aprovação e elenco confirmado sem sair do detalhe', async () => {
+    let phase: 'available' | 'pending' | 'confirmed' = 'available';
+    let role: 'candidate' | 'creator' = 'candidate';
+    const spy = jest
+      .spyOn(api, 'request')
+      .mockImplementation((config: Config) => {
+        const url = String(config.url);
+        if (url.endsWith('/applications') && config.method === 'POST') {
+          phase = 'pending';
+          return Promise.resolve({
+            status: 201,
+            data: { data: makeApplication() },
+          });
+        }
+        if (url.endsWith('/applications') && config.method === 'GET')
+          return Promise.resolve({
+            status: 200,
+            data: { data: phase === 'pending' ? [makeApplication()] : [] },
+          });
+        if (url.endsWith('/approve') && config.method === 'POST') {
+          phase = 'confirmed';
+          return Promise.resolve({
+            status: 200,
+            data: { data: makeApplication({ status: 'CONFIRMED' }) },
+          });
+        }
+        const viewer =
+          role === 'creator'
+            ? detail.viewer
+            : {
+                isCreator: false,
+                invite: null,
+                participation:
+                  phase === 'available'
+                    ? null
+                    : {
+                        id: makeApplication().id,
+                        status:
+                          phase === 'pending'
+                            ? ('PENDING' as const)
+                            : ('CONFIRMED' as const),
+                        teamIndex: 2 as const,
+                      },
+              };
+        const teams =
+          phase === 'confirmed'
+            ? [
+                detail.teams[0],
+                {
+                  ...detail.teams[1],
+                  participants: [
+                    {
+                      id: makeApplication().id,
+                      user: otherPlayer,
+                      isCreator: false,
+                      joinedAt: makeApplication().joinedAt,
+                    },
+                  ],
+                },
+              ]
+            : detail.teams;
+        const match = makeMatchDetail({
+          viewer,
+          teams,
+          capacity: {
+            teamSize: 2,
+            total: 4,
+            confirmed: phase === 'confirmed' ? 2 : 1,
+            available: phase === 'confirmed' ? 2 : 3,
+          },
+        });
+        return Promise.resolve({ status: 200, data: { data: match } });
+      });
+
+    const candidate = renderWithQuery(<MatchDetailScreen />);
+    fireEvent.press(
+      (await screen.findAllByLabelText('Quero jogar no Time 2'))[0],
+    );
+    fireEvent.press(screen.getByText('Confirmar candidatura'));
+    await waitFor(() => expect(phase).toBe('pending'));
     await waitFor(() =>
       expect(
-        spy.mock.calls
-          .map(([config]) => config as Config)
-          .filter((c) => c.method === 'POST'),
-      ).toHaveLength(2),
+        screen.getByText('Sua candidatura · Aguardando aprovação'),
+      ).toBeOnTheScreen(),
     );
-    expect(screen.queryByText('Gerenciar')).not.toBeOnTheScreen();
-    expect(screen.queryByText('Candidaturas')).not.toBeOnTheScreen();
+    expect(screen.getByText('1 de 4 confirmados')).toBeOnTheScreen();
+    candidate.unmount();
+
+    role = 'creator';
+    const creator = renderWithQuery(<MatchDetailScreen />);
+    fireEvent.press(await screen.findByLabelText('Aprovar Bruno no Time 2'));
+    await waitFor(() => expect(phase).toBe('confirmed'));
+    await waitFor(() =>
+      expect(screen.getByText('2 de 4 confirmados')).toBeOnTheScreen(),
+    );
+    expect(screen.getByText(otherPlayer.fullName)).toBeOnTheScreen();
+    creator.unmount();
+
+    role = 'candidate';
+    renderWithQuery(<MatchDetailScreen />);
+    expect(
+      await screen.findByText(/Você está confirmado no Time 2/),
+    ).toBeOnTheScreen();
+    expect(
+      screen.queryByText('Sua candidatura · Aguardando aprovação'),
+    ).not.toBeOnTheScreen();
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `/v1/matches/${detail.id}/applications`,
+        method: 'POST',
+        data: { teamIndex: 2 },
+      }),
+    );
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `/v1/matches/${detail.id}/applications/${makeApplication().id}/approve`,
+        method: 'POST',
+        data: { teamIndex: 2 },
+      }),
+    );
   });
+
+  it.each([
+    ['TEAM_FULL', 409],
+    ['GENDER_INCOMPATIBLE', 409],
+    ['RATE_LIMITED', 429],
+    ['MATCH_NOT_OPEN', 409],
+  ])(
+    'explica %s na folha da vaga e mantém a partida visível',
+    async (code, status) => {
+      jest
+        .spyOn(api, 'request')
+        .mockImplementation((config: Config) =>
+          config.method === 'POST'
+            ? Promise.reject(new ApiError(code, status))
+            : Promise.resolve({ status: 200, data: { data: outsider } }),
+        );
+      renderWithQuery(<MatchDetailScreen />);
+      fireEvent.press(
+        (await screen.findAllByLabelText('Quero jogar no Time 2'))[0],
+      );
+      fireEvent.press(screen.getByText('Confirmar candidatura'));
+      expect(
+        await screen.findByText(new ApiError(code, status).message),
+      ).toBeOnTheScreen();
+      expect(screen.getByText('Candidatar-se ao Time 2')).toBeOnTheScreen();
+      expect(screen.getByText('Padel de sábado')).toBeOnTheScreen();
+    },
+  );
 
   it('terceiro em partida privada vê o motivo e nenhuma ação', async () => {
     mockApi({ ...outsider, visibility: 'PRIVATE' });
@@ -330,8 +481,8 @@ describe('MatchDetailScreen', () => {
   it('criador de partida aberta vê as candidaturas e cancela com motivo', async () => {
     const spy = mockApi(detail);
     renderWithQuery(<MatchDetailScreen />);
-    expect(await screen.findByText('Candidaturas')).toBeOnTheScreen();
     expect(await screen.findByText(otherPlayer.fullName)).toBeOnTheScreen();
+    expect(screen.getByText(/Aguardando decisão/)).toBeOnTheScreen();
     fireEvent.press(screen.getByText('Cancelar partida'));
     fireEvent.changeText(
       await screen.findByLabelText('Motivo (opcional)'),
@@ -352,7 +503,7 @@ describe('MatchDetailScreen', () => {
     mockApi(detail);
     renderWithQuery(<MatchDetailScreen />);
     expect(await screen.findByText('Convites da partida')).toBeOnTheScreen();
-    fireEvent.press(screen.getByText('Convidar jogador'));
+    fireEvent.press(screen.getByLabelText('Convidar amigo para o Time 1'));
     expect(await screen.findByText('Quem você quer chamar?')).toBeOnTheScreen();
   });
 

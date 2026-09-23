@@ -37,15 +37,17 @@ export function teamRoom(match: MatchDetail, teamIndex: TeamIndex) {
 export function InviteComposer({
   match,
   player,
+  initialTeamIndex,
   onBack,
   onSent,
 }: {
   match: MatchDetail;
   player: PublicUser;
+  initialTeamIndex?: TeamIndex;
   onBack?: () => void;
   onSent: () => void;
 }) {
-  const [team, setTeam] = useState<TeamIndex | undefined>(undefined);
+  const [team, setTeam] = useState<TeamIndex | undefined>(initialTeamIndex);
   const [message, setMessage] = useState('');
   const send = useInviteMutation(
     () =>
