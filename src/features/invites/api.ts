@@ -15,6 +15,7 @@ import {
   categorySchema,
   levelSchema,
   publicUserSchema,
+  ratingTierSchema,
 } from '@/types/api';
 
 // Allowlists do contrato de T08 (convites esportivos), portadas 1:1 do web.
@@ -31,6 +32,7 @@ export const inviteSchema = z.object({
         declaredLevel: levelSchema.nullable(),
         category: categorySchema.nullable(),
         rating: z.number().nullable(),
+        tier: ratingTierSchema.nullable(),
       })
       .nullable(),
   }),

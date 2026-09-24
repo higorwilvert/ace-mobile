@@ -5,9 +5,10 @@ import { Pressable, View } from 'react-native';
 
 import { Avatar } from '@/components/ace/avatar';
 import { SportIcon } from '@/components/ace/sport-icon';
+import { TierTag } from '@/components/ace/tier-badge';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
-import type { PublicUser } from '@/types/api';
+import type { PublicUser, RatingTier } from '@/types/api';
 
 /**
  * Linha/cartão de jogador reutilizada em busca, amigos, pedidos e listas de
@@ -23,7 +24,12 @@ export function PlayerRow({
   linked = true,
 }: {
   user: PublicUser;
-  sports?: { id: number; slug: string; name: string }[];
+  sports?: {
+    id: number;
+    slug: string;
+    name: string;
+    tier?: RatingTier | null;
+  }[];
   isPrivate?: boolean;
   meta?: string;
   children?: ReactNode;
@@ -75,6 +81,23 @@ export function PlayerRow({
           </View>
         )}
       </Pressable>
+      {/* Divisão ACE por modalidade (T39); nula em perfil privado de estranho. */}
+      {sports.some((sport) => sport.tier) && (
+        <View className='flex-row flex-wrap gap-x-3 gap-y-1.5'>
+          {sports.map(
+            (sport) =>
+              sport.tier && (
+                <View
+                  key={sport.id}
+                  accessible
+                  accessibilityLabel={`${sport.name}: ${sport.tier.label}`}
+                >
+                  <TierTag tier={sport.tier} />
+                </View>
+              ),
+          )}
+        </View>
+      )}
       {children && (
         <View className='flex-row items-center justify-end gap-2'>
           {children}

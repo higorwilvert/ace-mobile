@@ -26,11 +26,15 @@ const withGuest = makeMatchDetail({
           user: otherPlayer,
           isCreator: false,
           joinedAt: '2026-09-12T13:00:00.000Z',
+          tier: null,
         },
       ],
     },
   ],
 });
+
+// O emblema é decorativo quando o nome da divisão está ao lado.
+const hidden = { includeHiddenElements: true };
 
 describe('CourtBoard', () => {
   it.each([
@@ -135,6 +139,18 @@ describe('CourtBoard', () => {
     expect(onRemove).toHaveBeenCalledWith(withGuest.teams[1].participants[0]);
     fireEvent.press(screen.getByLabelText('Ver perfil de Bruno Lima'));
     expect(mockPush).toHaveBeenCalledWith(`/players/${otherPlayer.id}`);
+  });
+
+  it('mostra a divisão de quem está no elenco quando a API a envia (T39)', () => {
+    render(
+      <CourtBoard
+        match={withGuest}
+        permissions={matchPermissions(withGuest)}
+      />,
+    );
+    // Criadora com divisão; Bruno com `tier: null` (perfil privado ou sem rating).
+    expect(screen.getAllByText('Platina I')).toHaveLength(1);
+    expect(screen.getAllByTestId('tier-badge', hidden)).toHaveLength(1);
   });
 
   it('esconde o remover para quem não gerencia a partida', () => {

@@ -40,6 +40,7 @@ playable.teams[1].participants.push({
   user: otherPlayer,
   isCreator: false,
   joinedAt: '2026-08-30T12:00:00.000Z',
+  tier: null,
 });
 const mockApi = (match = playable, post: 'ok' | 409 = 'ok') =>
   jest.spyOn(api, 'request').mockImplementation((config: Config) => {

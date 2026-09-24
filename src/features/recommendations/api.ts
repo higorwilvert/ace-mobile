@@ -2,7 +2,11 @@ import { z } from 'zod';
 
 import { teamIndexSchema } from '@/features/matches/api';
 import { apiRequest } from '@/lib/api-client';
-import { genderPolicySchema, publicUserSchema } from '@/types/api';
+import {
+  genderPolicySchema,
+  publicUserSchema,
+  ratingTierSchema,
+} from '@/types/api';
 
 // Allowlists do contrato de T13/T14 (protocolo T12): campo desconhecido é
 // descartado (coordenadas, agenda e snapshots nunca chegam à UI); campo
@@ -65,7 +69,9 @@ export const recommendedMatchCardSchema = z.object({
   }),
 });
 export const playerRecommendationsSchema = z.object({
-  data: z.array(itemSchema.extend({ player: publicUserSchema })),
+  data: z.array(
+    itemSchema.extend({ player: publicUserSchema, tier: ratingTierSchema }),
+  ),
   meta: metaSchema.extend({
     scheduledAt: z.string().datetime().nullable(),
     durationMinutes: z.number().int().nullable(),

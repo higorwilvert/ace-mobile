@@ -12,24 +12,37 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
 import { useSession } from '@/features/auth/session';
-import { historyQuery, type RatingChange } from '@/features/results/api';
+import {
+  historyQuery,
+  summaryQuery,
+  type RatingChange,
+} from '@/features/results/api';
 import { HistoryEntryCard } from '@/features/results/history-entry';
 import { useRefetchOnFocus } from '@/hooks/use-refetch-on-focus';
 
 import { playerProfileQuery } from './api';
-import { RatingCard, RatingChangeDetails } from './rating-card';
+import { DivisionCard, DivisionLadder } from './division-card';
+import { RatingChangeDetails } from './rating-card';
 
 /**
- * Rating Glicko-2 do próprio jogador (RNF12): o atual por modalidade vem do
- * perfil (`player_ratings`), a evolução do histórico com `ratingChange`
- * (T11). Nenhum cálculo aqui — só os valores persistidos pela API.
+ * "Rating e evolução" do próprio jogador (T32 + T39): a divisão de uma
+ * modalidade, a escada das 12 divisões (tabela da API) e a evolução por
+ * partida (`ratingChange`, T11). Nenhum cálculo aqui: divisão, confiança e
+ * valores vêm persistidos da API.
  */
 export function RatingScreen() {
   const { user } = useSession();
   const router = useRouter();
   const profile = useQuery(playerProfileQuery(user?.id ?? ''));
-  const [sportId, setSportId] = useState<number>();
-  const history = useInfiniteQuery(historyQuery('me', sportId));
+  const totals = useQuery(summaryQuery(user?.id ?? ''));
+  const [picked, setPicked] = useState<number>();
+  const sports = profile.data?.sportProfiles ?? [];
+  // A principal vem primeiro na API; a escolha só muda a modalidade exibida.
+  const sport = sports.find((p) => p.sportId === picked) ?? sports[0];
+  const history = useInfiniteQuery({
+    ...historyQuery('me', sport?.sportId),
+    enabled: sport !== undefined,
+  });
   const [selected, setSelected] = useState<RatingChange | null>(null);
   useRefetchOnFocus(history.refetch);
   useRefetchOnFocus(profile.refetch);
@@ -37,29 +50,13 @@ export function RatingScreen() {
   if (profile.isPending) return <LoadingState label='Buscando seu rating…' />;
   if (profile.isError)
     return <ErrorState error={profile.error} retry={() => profile.refetch()} />;
-  const sports = profile.data.sportProfiles;
-  const entries = history.data?.pages.flatMap((page) => page.data) ?? [];
-  const header = (
-    <View className='gap-4 pb-4 pt-2'>
-      <View className='gap-1'>
-        <Text className='font-inter-semibold text-xs uppercase tracking-widest text-brand'>
-          Seu nível em evolução
-        </Text>
-        <Text variant='title'>
-          Rating
-          <Text className='font-inter-bold text-2xl text-brand'>.</Text>
-        </Text>
-        <Text variant='muted'>
-          A categoria declarada define a estimativa inicial. O Glicko-2
-          acompanha sua evolução pelos resultados e pela incerteza dos ratings.
-          Alterar a categoria depois não reinicia essa evolução.
-        </Text>
-      </View>
-      {sports.length === 0 ? (
+  if (!sport)
+    return (
+      <Screen edges={['bottom']}>
         <EmptyState
           icon={<TrendingUp size={28} color={brand} />}
           title='Adicione uma modalidade para começar'
-          description='Escolha a categoria em que você joga para definir sua estimativa inicial.'
+          description='Escolha a categoria em que você joga para definir sua divisão inicial.'
         >
           <View className='w-full pt-2'>
             <Button
@@ -68,26 +65,51 @@ export function RatingScreen() {
             />
           </View>
         </EmptyState>
-      ) : (
-        sports.map((p) => <RatingCard key={p.sportId} profile={p} />)
-      )}
-      <View className='gap-1 pt-2'>
-        <Text variant='subtitle'>Evolução por partida</Text>
+      </Screen>
+    );
+  const entries = history.data?.pages.flatMap((page) => page.data) ?? [];
+  const header = (
+    <View className='gap-4 pb-4 pt-2'>
+      <View className='gap-1'>
         <Text variant='muted'>
-          Toque na variação para ver os valores registrados pela API.
+          A categoria declarada define a estimativa inicial. Depois, o Glicko-2
+          acompanha os resultados e a divisão muda junto. Alterar a categoria
+          não reinicia essa evolução.
         </Text>
       </View>
-      {sports.length > 0 && (
+      {sports.length > 1 && (
         <Chips
-          label='Modalidade da evolução'
-          value={sportId ? String(sportId) : undefined}
-          onChange={(value) => setSportId(value ? Number(value) : undefined)}
+          label='Modalidade'
+          value={String(sport.sportId)}
+          clearable={false}
+          onChange={(value) => setPicked(Number(value))}
           options={sports.map((p) => ({
             value: String(p.sportId),
             label: p.sport.name,
           }))}
         />
       )}
+      <DivisionCard
+        profile={sport}
+        record={totals.data?.find((t) => t.sportId === sport.sportId)}
+        own
+        technicalOpen
+      />
+      <View className='gap-1 pt-2'>
+        <Text variant='subtitle'>Como funcionam as divisões</Text>
+        <Text variant='muted'>
+          Seis faixas com dois níveis cada, iguais em todas as modalidades. Quem
+          começa pela categoria declarada aparece como estimativa inicial até o
+          primeiro resultado.
+        </Text>
+      </View>
+      <DivisionLadder sportId={sport.sportId} current={sport.rating?.tier} />
+      <View className='gap-1 pt-2'>
+        <Text variant='subtitle'>Evolução por partida</Text>
+        <Text variant='muted'>
+          {`Rating de ${sport.sport.name} antes e depois de cada resultado. Toque na variação para ver os valores registrados pela API.`}
+        </Text>
+      </View>
     </View>
   );
   return (
@@ -114,24 +136,14 @@ export function RatingScreen() {
           ) : (
             <EmptyState
               icon={<TrendingUp size={28} color={brand} />}
-              title={
-                sportId
-                  ? 'Nada nesta modalidade ainda'
-                  : 'Sua evolução começa com o primeiro resultado'
-              }
-              description={
-                sportId
-                  ? 'Toque na modalidade de novo para ver todas.'
-                  : 'Depois de registrar o placar, você verá aqui os valores antes e depois de cada partida, processados pelo ACE.'
-              }
+              title='Sua evolução começa com o primeiro resultado'
+              description='Depois de registrar o placar, você verá aqui os valores antes e depois de cada partida, processados pelo ACE.'
             >
-              {!sportId && (
-                <Button
-                  variant='secondary'
-                  label='Ver minhas partidas'
-                  onPress={() => router.push('/mine')}
-                />
-              )}
+              <Button
+                variant='secondary'
+                label='Ver minhas partidas'
+                onPress={() => router.push('/mine')}
+              />
             </EmptyState>
           )
         }

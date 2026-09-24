@@ -4,17 +4,19 @@ import { z } from 'zod';
 import { apiRequest } from '@/lib/api-client';
 import {
   apiEnvelope,
-  type Availability,
   availabilitySchema,
-  type PlayerProfile,
   playerProfileSchema,
-  type ProfileVisibility,
   profileVisibilitySchema,
-  type PublicProfile,
   publicProfileSchema,
   publicUserSchema,
+  ratingTierDefinitionSchema,
+  ratingTierSchema,
   relationshipSchema,
   sportSchema,
+  type Availability,
+  type PlayerProfile,
+  type ProfileVisibility,
+  type PublicProfile,
   type User,
   userSchema,
 } from '@/types/api';
@@ -197,7 +199,13 @@ export const playerProfileQuery = (userId: string) =>
 export const userSearchItemSchema = publicUserSchema.extend({
   profileVisibility: profileVisibilitySchema,
   sports: z.array(
-    z.object({ id: z.number().int(), slug: z.string(), name: z.string() }),
+    z.object({
+      id: z.number().int(),
+      slug: z.string(),
+      name: z.string(),
+      // Null quando o perfil é privado para quem busca (T28) ou sem rating.
+      tier: ratingTierSchema.nullable(),
+    }),
   ),
   relationship: relationshipSchema,
 });
@@ -222,4 +230,27 @@ export const searchPlayersQuery = (term: string, sportId?: number) =>
     enabled: term.trim().length >= 2,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
+  });
+
+// Tabela das divisões ACE (T39). Pública e estável: com `sportId`, traz o
+// emblema de cada divisão naquela modalidade.
+export const ratingTiersQuery = (sportId?: number) =>
+  queryOptions({
+    queryKey: ['rating-tiers', sportId ?? null],
+    queryFn: async ({ signal }) =>
+      (
+        await apiRequest(
+          'GET',
+          '/v1/rating-tiers',
+          apiEnvelope(
+            z.object({
+              version: z.string(),
+              tiers: z.array(ratingTierDefinitionSchema),
+            }),
+          ),
+          undefined,
+          { public: true, signal, params: { sportId } },
+        )
+      ).data,
+    staleTime: Infinity,
   });

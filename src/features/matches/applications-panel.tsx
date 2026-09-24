@@ -24,8 +24,6 @@ import {
 import { teamIndexes } from './schemas';
 import { useMatchMutation } from './use-match-mutation';
 
-const rating = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
-
 function teamRoom(match: MatchDetail, teamIndex: TeamIndex) {
   const team = match.teams.find((t) => t.teamIndex === teamIndex);
   return match.teamSize - (team?.participants.length ?? 0);
@@ -105,12 +103,8 @@ function ApplicationRow({
           }
         />
         <Meta
-          label='Rating'
-          value={
-            application.sportProfile?.rating != null
-              ? rating.format(application.sportProfile.rating)
-              : 'Sem rating'
-          }
+          label='Divisão'
+          value={application.sportProfile?.tier?.label ?? 'Sem rating'}
         />
         <Meta
           label='Prefere'

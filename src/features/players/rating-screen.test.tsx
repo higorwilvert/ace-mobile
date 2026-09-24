@@ -6,6 +6,9 @@ import {
   makePage,
   makePublicProfile,
   makeSport,
+  makeTier,
+  makeTierTable,
+  makeTotals,
   makeUser,
 } from '@/test/fixtures';
 import { renderWithQuery } from '@/test/render';
@@ -34,7 +37,7 @@ const base = makePublicProfile({ id: me.id, fullName: me.fullName });
 const profile = {
   ...base,
   sportProfiles: [
-    base.sportProfiles[0], // padel: 1512, RD 180, 8 partidas, 5V 3D 0E
+    base.sportProfiles[0], // padel: 1512 (Platina I), RD 180, 8 partidas
     {
       ...base.sportProfiles[0],
       sportId: 2,
@@ -50,6 +53,14 @@ const profile = {
         wins: 0,
         losses: 0,
         draws: 0,
+        algorithmVersion: 'glicko2-v1',
+        confidence: 0,
+        tier: makeTier({
+          progress: 0,
+          pointsToNext: 100,
+          provisional: true,
+          imagePath: null,
+        }),
       },
     },
   ],
@@ -65,6 +76,10 @@ const mockApi = (
         status: 200,
         data: { data: { ...profile, sportProfiles } },
       });
+    if (url === `/v1/users/${me.id}/history/summary`)
+      return Promise.resolve({ status: 200, data: { data: [makeTotals()] } });
+    if (url === '/v1/rating-tiers')
+      return Promise.resolve({ status: 200, data: { data: makeTierTable() } });
     if (url === '/v1/users/me/history') {
       // O filtro por modalidade é da API: só padel tem partidas na base.
       const { sportId } = (config.params ?? {}) as { sportId?: number };
@@ -83,43 +98,49 @@ beforeEach(async () => {
 afterEach(() => jest.restoreAllMocks());
 
 describe('RatingScreen', () => {
-  it('mostra o rating por modalidade, RD/σ sob demanda e os detalhes do processamento por partida', async () => {
+  it('mostra a divisão, a escada, os números do Glicko-2 e os detalhes por partida', async () => {
     mockApi();
     renderWithQuery(<RatingScreen />);
-    expect(await screen.findByLabelText('Rating 1.512,0')).toBeOnTheScreen();
+    expect(await screen.findByText('Você está aqui')).toBeOnTheScreen();
+    expect(screen.getAllByText('Platina I').length).toBeGreaterThan(1);
     expect(screen.getByText('8 partidas processadas')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Rating 1.500,0')).toBeOnTheScreen();
-    expect(
-      screen.getByText('Estimativa inicial · sem resultados processados'),
-    ).toBeOnTheScreen();
-    expect(screen.getByText(/Defina sua categoria/)).toBeOnTheScreen();
-    expect(screen.queryByText(/Mede a incerteza/)).not.toBeOnTheScreen();
-    fireEvent.press(screen.getAllByText('Entender os números')[0]);
-    expect(screen.getByText(/Mede a incerteza/)).toBeOnTheScreen();
-    expect(screen.getByText('180,0')).toBeOnTheScreen();
+    expect(screen.getByText('faltam 88 pontos')).toBeOnTheScreen();
+    expect(screen.getByText('49%')).toBeOnTheScreen();
+    // Escada da API, da mais alta à mais baixa, com os limites.
+    expect(screen.getByText('2.000 ou mais')).toBeOnTheScreen();
+    expect(screen.getByText('abaixo de 1.000')).toBeOnTheScreen();
+    // Detalhes técnicos abertos nesta tela: nenhum número do Glicko-2 some,
+    // e o rating também aparece pequeno ao lado da divisão.
+    expect(screen.getAllByText('1.512')).toHaveLength(2);
+    expect(screen.getByText('180')).toBeOnTheScreen();
+    expect(screen.getByText('ace-glicko2-v1 · ace-tiers-v1')).toBeOnTheScreen();
+    expect(screen.getByText('1.500 a 1.600')).toBeOnTheScreen();
     expect(await screen.findByText('Padel de sábado')).toBeOnTheScreen();
-    expect(
-      screen.queryByText('Detalhes do processamento'),
-    ).not.toBeOnTheScreen();
     fireEvent.press(screen.getByLabelText('Rating +12,3'));
     expect(
       await screen.findByText('Detalhes do processamento'),
     ).toBeOnTheScreen();
     expect(screen.getByText('glicko2-v1')).toBeOnTheScreen();
     expect(screen.getByText('1500 → 1512.3')).toBeOnTheScreen();
-    expect(screen.getByText('350 → 290.5')).toBeOnTheScreen();
     expect(screen.getByText('+12,3 pontos')).toBeOnTheScreen();
   });
-  it('filtra a evolução pela modalidade tocada', async () => {
+  it('troca a modalidade: divisão, escada e evolução seguem a escolha', async () => {
     const spy = mockApi();
     renderWithQuery(<RatingScreen />);
     await screen.findByText('Padel de sábado');
     fireEvent.press(screen.getByRole('button', { name: 'Tênis' }));
-    await screen.findByText('Nada nesta modalidade ainda');
-    const calls = spy.mock.calls
-      .map(([c]) => c as Config)
-      .filter((c) => c.url === '/v1/users/me/history');
-    expect(calls.at(-1)?.params).toMatchObject({ sportId: 2 });
+    expect(await screen.findByText('Estimativa inicial')).toBeOnTheScreen();
+    // Início da divisão e confiança zerada: as duas barras em 0%.
+    expect(screen.getAllByText('0%')).toHaveLength(2);
+    expect(screen.getByText(/Defina sua categoria/)).toBeOnTheScreen();
+    await screen.findByText('Sua evolução começa com o primeiro resultado');
+    const calls = spy.mock.calls.map(([c]) => c as Config);
+    expect(
+      calls.filter((c) => c.url === '/v1/users/me/history').at(-1)?.params,
+    ).toMatchObject({ sportId: 2 });
+    expect(
+      calls.filter((c) => c.url === '/v1/rating-tiers').at(-1)?.params,
+    ).toMatchObject({ sportId: 2 });
   });
   it('sem resultados, aponta para as minhas partidas; sem modalidade, para o perfil esportivo', async () => {
     mockApi([]);

@@ -23,11 +23,65 @@ import type {
   Availability,
   PlayerProfile,
   PublicProfile,
+  RatingTier,
   Relationship,
   Session,
   Sport,
   User,
 } from '@/types/api';
+
+// ---- Divisões ACE (T39)
+
+/** Platina I (rating 1512): 12% da divisão, faltam 88 pontos, com emblema. */
+export function makeTier(overrides: Partial<RatingTier> = {}): RatingTier {
+  return {
+    version: 'ace-tiers-v1',
+    code: 'platina-i',
+    label: 'Platina I',
+    division: 'platina',
+    level: 1,
+    ordinal: 7,
+    minRating: 1500,
+    maxRating: 1600,
+    progress: 0.12,
+    next: { code: 'platina-ii', label: 'Platina II' },
+    pointsToNext: 88,
+    provisional: false,
+    imagePath: '/v1/tiers/padel/platina-i.webp?v=52b668a2',
+    ...overrides,
+  };
+}
+
+const divisions = [
+  ['bronze', 'Bronze'],
+  ['prata', 'Prata'],
+  ['ouro', 'Ouro'],
+  ['platina', 'Platina'],
+  ['esmeralda', 'Esmeralda'],
+  ['diamante', 'Diamante'],
+] as const;
+/** `GET /v1/rating-tiers`: as 12 divisões (ace-tiers-v1), sem arte. */
+export function makeTierTable() {
+  return {
+    version: 'ace-tiers-v1',
+    tiers: divisions.flatMap(([division, name], index) =>
+      ([1, 2] as const).map((level) => {
+        const ordinal = index * 2 + level;
+        const lower = 900 + (ordinal - 1) * 100;
+        return {
+          code: `${division}-${level === 1 ? 'i' : 'ii'}`,
+          label: `${name} ${level === 1 ? 'I' : 'II'}`,
+          division,
+          level,
+          ordinal,
+          minRating: ordinal === 1 ? null : lower,
+          maxRating: ordinal === 12 ? null : lower + 100,
+          imagePath: null,
+        };
+      }),
+    ),
+  };
+}
 
 export function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -163,6 +217,9 @@ export function makePublicProfile(
           wins: 5,
           losses: 3,
           draws: 0,
+          algorithmVersion: 'ace-glicko2-v1',
+          confidence: 0.486,
+          tier: makeTier(),
         },
       },
     ],
@@ -239,6 +296,7 @@ export function makeMatchDetail(
             user: { ...creator, city: 'Florianópolis', state: 'SC' },
             isCreator: true,
             joinedAt: '2026-09-12T12:00:00.000Z',
+            tier: makeTier(),
           },
         ],
       },
@@ -269,6 +327,7 @@ export function makeApplication(
       declaredLevel: null,
       category: makeSport().categories[1],
       rating: 1500,
+      tier: makeTier({ progress: 0, pointsToNext: 100, provisional: true }),
     },
     ...overrides,
   };
@@ -308,6 +367,7 @@ export function makeInvite(overrides: Partial<Invite> = {}): Invite {
         declaredLevel: null,
         category: makeSport().categories[1],
         rating: 1500,
+        tier: makeTier({ progress: 0, pointsToNext: 100, provisional: true }),
       },
     },
     createdAt: '2026-09-12T14:00:00.000Z',
@@ -421,6 +481,7 @@ export function makeRecommendedPlayer(
     coldStart: true,
     distanceMethod: 'CITY_STATE',
     player: otherPlayer,
+    tier: makeTier(),
     ...overrides,
   };
 }
@@ -541,7 +602,7 @@ export function makeSearchItem(
   return {
     ...otherPlayer,
     profileVisibility: 'PUBLIC',
-    sports: [{ id: 1, slug: 'padel', name: 'Padel' }],
+    sports: [{ id: 1, slug: 'padel', name: 'Padel', tier: makeTier() }],
     relationship: makeRelationship(),
     ...overrides,
   };

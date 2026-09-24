@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Avatar } from '@/components/ace/avatar';
+import { TierTag } from '@/components/ace/tier-badge';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
@@ -61,6 +62,16 @@ export function PlayerSuggestion({
           <View className='flex-row items-center gap-1'>
             <MapPin size={13} color={palette.colors['muted-foreground']} />
             <Text variant='muted'>{`${player.city}, ${player.state}`}</Text>
+          </View>
+          <View className='flex-row items-center gap-2 pt-1'>
+            <TierTag tier={item.tier} size={22} />
+            {item.tier.provisional && (
+              <View className='rounded-pill bg-muted px-2.5 py-0.5'>
+                <Text className='font-inter-medium text-xs text-muted-foreground'>
+                  Estimativa inicial
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Pressable>

@@ -53,7 +53,7 @@ describe('MatchInvitesPanel', () => {
     );
     expect(await screen.findByText('Bruno Lima')).toBeOnTheScreen();
     expect(screen.getByText('Categoria C')).toBeOnTheScreen();
-    expect(screen.getByText('1500')).toBeOnTheScreen();
+    expect(screen.getByText('Platina I')).toBeOnTheScreen();
     expect(screen.getByText('Time 2')).toBeOnTheScreen();
     expect(screen.getByText('Bora?')).toBeOnTheScreen();
     fireEvent.press(screen.getByText('Convidar jogador'));

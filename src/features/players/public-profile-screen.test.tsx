@@ -88,7 +88,7 @@ describe('PublicProfileScreen', () => {
     expect(screen.getByRole('progressbar')).toBeOnTheScreen();
   });
 
-  it('mostra modalidade, categoria, rating e histórico (totais + últimas) de um perfil público', async () => {
+  it('mostra modalidade, categoria, divisão e histórico (totais + últimas) de um perfil público', async () => {
     const spy = jest
       .spyOn(api, 'request')
       .mockImplementation((config: { url?: string }) => {
@@ -110,7 +110,16 @@ describe('PublicProfileScreen', () => {
     expect(screen.getByText('Florianópolis · SC')).toBeOnTheScreen();
     expect(screen.getByText('Jogo desde 2019.')).toBeOnTheScreen();
     expect(screen.getByText(/Categoria C/)).toBeOnTheScreen();
-    expect(screen.getByText('1512')).toBeOnTheScreen();
+    // Divisão da API no chip do cabeçalho e no cartão; o número do Glicko-2
+    // fica no modo técnico, fechado por padrão.
+    expect(screen.getAllByText('Platina I')).toHaveLength(2);
+    expect(screen.getByText('faltam 88 pontos')).toBeOnTheScreen();
+    expect(screen.getByText('49%')).toBeOnTheScreen();
+    // Rating pequeno ao lado da divisão; o valor exato nos detalhes técnicos.
+    expect(screen.getByText('1.512')).toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Detalhes técnicos'));
+    expect(screen.getAllByText('1.512')).toHaveLength(2);
+    expect(screen.getByText('ace-glicko2-v1 · ace-tiers-v1')).toBeOnTheScreen();
     // Totais vêm do histórico (RF25), não de player_ratings.
     expect(await screen.findByText('3 partidas')).toBeOnTheScreen();
     expect(screen.getByText('Vitória')).toBeOnTheScreen();
@@ -329,7 +338,7 @@ describe('PublicProfileScreen', () => {
         return Promise.resolve({ status: 200, data: { data: profile } });
       });
     renderWithQuery(<PublicProfileScreen />);
-    await screen.findByText('Modalidades');
+    await screen.findByText('Divisões');
     expect(screen.queryByLabelText('Jogadores e amigos')).toBeNull();
     expect(screen.queryByLabelText('Conta e configurações')).toBeNull();
     expect(screen.queryByText('Ver evolução do rating')).toBeNull();

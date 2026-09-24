@@ -174,6 +174,7 @@ describe('InviteSheet', () => {
               user: otherPlayer,
               isCreator: false,
               joinedAt: '2026-09-12T12:00:00.000Z',
+              tier: null,
             },
           ],
         },

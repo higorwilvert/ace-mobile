@@ -8,6 +8,7 @@ import {
   genderPolicySchema,
   levelSchema,
   publicUserSchema,
+  ratingTierSchema,
   sportSchema,
 } from '@/types/api';
 
@@ -82,6 +83,8 @@ export const matchParticipantSchema = z.object({
   user: publicUserSchema,
   isCreator: z.boolean(),
   joinedAt: z.string().datetime(),
+  // Divisão na modalidade da partida; null sem rating ou perfil privado (T39).
+  tier: ratingTierSchema.nullable(),
 });
 export const matchTeamSchema = z.object({
   id: z.string().uuid(),
@@ -151,6 +154,7 @@ export const applicationSchema = z.object({
       declaredLevel: levelSchema.nullable(),
       category: categorySchema.nullable(),
       rating: z.number().nullable(),
+      tier: ratingTierSchema.nullable(),
     })
     .nullable(),
 });

@@ -207,6 +207,7 @@ describe('MatchDetailScreen', () => {
                       user: otherPlayer,
                       isCreator: false,
                       joinedAt: makeApplication().joinedAt,
+                      tier: null,
                     },
                   ],
                 },

@@ -224,6 +224,7 @@ describe('rótulos', () => {
       user: otherPlayer,
       isCreator: false,
       joinedAt: '2026-09-12T13:00:00.000Z',
+      tier: null,
     });
     expect(teamName(singles, 1)).toBe('Ana Clara Souza');
     expect(teamName(singles, 2)).toBe('Bruno Lima');

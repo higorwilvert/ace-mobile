@@ -83,6 +83,38 @@ export const availabilitySchema = z.object({
   timeZone: z.string(),
   createdAt: z.string().datetime(),
 });
+// Divisões ACE (T39, ace-tiers-v1): a API decide a divisão a partir do rating
+// exato e o cliente só desenha. O emblema é sempre um caminho da própria API;
+// um valor fora do formato vira null e o cliente desenha o escudo vetorial.
+export const tierDivisionSchema = z.enum([
+  'bronze',
+  'prata',
+  'ouro',
+  'platina',
+  'esmeralda',
+  'diamante',
+]);
+export const ratingTierDefinitionSchema = z.object({
+  code: z.string(),
+  label: z.string(),
+  division: tierDivisionSchema,
+  level: z.union([z.literal(1), z.literal(2)]),
+  ordinal: z.number().int(),
+  minRating: z.number().nullable(),
+  maxRating: z.number().nullable(),
+  imagePath: z
+    .string()
+    .regex(/^\/v1\/tiers\/[a-z_]+\/[a-z]+-i{1,2}\.webp\?v=[0-9a-f]+$/)
+    .nullable()
+    .catch(null),
+});
+export const ratingTierSchema = ratingTierDefinitionSchema.extend({
+  version: z.string(),
+  progress: z.number().min(0).max(1),
+  next: z.object({ code: z.string(), label: z.string() }).nullable(),
+  pointsToNext: z.number().int().nullable(),
+  provisional: z.boolean(),
+});
 export const ratingSchema = z.object({
   rating: z.number(),
   rd: z.number(),
@@ -91,6 +123,10 @@ export const ratingSchema = z.object({
   wins: z.number(),
   losses: z.number(),
   draws: z.number(),
+  algorithmVersion: z.string(),
+  // 1 − RD/350, calculada pela API: é o que a interface mostra no lugar do RD.
+  confidence: z.number().min(0).max(1),
+  tier: ratingTierSchema,
 });
 // Projection of another player as seen anywhere in the app (matches, invites,
 // friends, search): never more than these five fields.
@@ -163,6 +199,9 @@ export type SportCategory = z.infer<typeof categorySchema>;
 export type Gender = z.infer<typeof genderSchema>;
 export type GenderPolicy = z.infer<typeof genderPolicySchema>;
 export type Rating = z.infer<typeof ratingSchema>;
+export type RatingTier = z.infer<typeof ratingTierSchema>;
+export type RatingTierDefinition = z.infer<typeof ratingTierDefinitionSchema>;
+export type TierDivision = z.infer<typeof tierDivisionSchema>;
 export type PlayerProfile = z.infer<typeof playerProfileSchema>;
 export type Availability = z.infer<typeof availabilitySchema>;
 export type PublicProfile = z.infer<typeof publicProfileSchema>;

@@ -6,6 +6,7 @@ import Svg, { Path, Rect } from 'react-native-svg';
 
 import { Avatar } from '@/components/ace/avatar';
 import { sportColors } from '@/components/ace/sport-icon';
+import { TierTag } from '@/components/ace/tier-badge';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
 import { categoryLabel } from '@/features/players/labels';
@@ -305,6 +306,9 @@ export function CourtBoard({
                           <Text variant='label' numberOfLines={1}>
                             {getFirstAndLastWord(participant.user.fullName)}
                           </Text>
+                          {participant.tier && (
+                            <TierTag tier={participant.tier} size={16} />
+                          )}
                           {participant.isCreator && (
                             <Text className='font-inter-bold text-[10px] uppercase tracking-wider text-navy'>
                               Criador
@@ -524,6 +528,9 @@ function CandidateCard({
           <Text variant='label' numberOfLines={1}>
             {application.user.fullName}
           </Text>
+          {application.sportProfile?.tier && (
+            <TierTag tier={application.sportProfile.tier} size={16} />
+          )}
           <Text className='text-xs text-[#8a6420]'>
             {application.sportProfile
               ? `${categoryLabel(application.sportProfile)} · `

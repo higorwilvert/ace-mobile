@@ -81,12 +81,8 @@ function InviteRow({ invite, matchId }: { invite: Invite; matchId: string }) {
           }
         />
         <Meta
-          label='Rating'
-          value={
-            invitee.sportProfile?.rating != null
-              ? String(Math.round(invitee.sportProfile.rating))
-              : 'Sem rating'
-          }
+          label='Divisão'
+          value={invitee.sportProfile?.tier?.label ?? 'Sem rating'}
         />
         <Meta
           label='Time'
