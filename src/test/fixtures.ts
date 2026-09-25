@@ -1,3 +1,4 @@
+import type { FeedItem } from '@/features/activity/api';
 import type { Friend, FriendRequest } from '@/features/friends/api';
 import type { Feed, Home } from '@/features/home/api';
 import type { Invite, MyInvite } from '@/features/invites/api';
@@ -667,26 +668,33 @@ export function makeHome(overrides: Partial<Home> = {}): Home {
       players: { ...makePlayerRecommendations(), total: 8 },
       matches: { ...makeMatchRecommendations(), total: 4 },
     },
-    friendActivity: [
+    ...overrides,
+  };
+}
+
+// Item do feed de atividade (T36): partida de amigo, sem fotos nem comentários.
+export function makeFeedItem(overrides: Partial<FeedItem> = {}): FeedItem {
+  return {
+    match: makeMatch({ status: 'COMPLETED' }),
+    result: makeMatchResult(),
+    teams: [
+      { teamIndex: 1, players: [otherPlayer] },
       {
-        match: makeMatch({ status: 'COMPLETED' }),
-        result: makeMatchResult(),
-        teams: [
-          { teamIndex: 1, players: [otherPlayer] },
+        teamIndex: 2,
+        players: [
           {
-            teamIndex: 2,
-            players: [
-              {
-                ...otherPlayer,
-                id: '0c8f2a54-1d2e-4f3a-9b8c-7d6e5f4a3b2c',
-                fullName: 'Camila Schmitt',
-              },
-            ],
+            ...otherPlayer,
+            id: '0c8f2a54-1d2e-4f3a-9b8c-7d6e5f4a3b2c',
+            fullName: 'Camila Schmitt',
           },
         ],
-        friendIds: [otherPlayer.id],
       },
     ],
+    friendIds: [otherPlayer.id],
+    photos: [],
+    likeCount: 2,
+    likedByMe: false,
+    commentCount: 0,
     ...overrides,
   };
 }

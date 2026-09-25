@@ -2,11 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { myInviteSchema } from '@/features/invites/api';
-import {
-  matchResultSchema,
-  matchSummarySchema,
-  teamIndexSchema,
-} from '@/features/matches/api';
+import { matchSummarySchema, teamIndexSchema } from '@/features/matches/api';
 import {
   kindSchema,
   matchRecommendationsSchema,
@@ -59,14 +55,6 @@ export const homeSchema = z.object({
       matches: matchRecommendationsSchema.extend({ total: count }).nullable(),
     })
     .nullable(),
-  friendActivity: z.array(
-    z.object({
-      match: matchSummarySchema,
-      result: matchResultSchema,
-      teams: teamsSchema,
-      friendIds: z.array(z.string().uuid()),
-    }),
-  ),
 });
 export const feedSchema = z.object({
   sportId: z.number().int().positive(),
@@ -77,7 +65,6 @@ export const feedSchema = z.object({
 export type Home = z.infer<typeof homeSchema>;
 export type Feed = z.infer<typeof feedSchema>;
 export type KindError = z.infer<typeof kindErrorSchema>;
-export type FriendActivity = Home['friendActivity'][number];
 
 export const homeKey = ['private', 'home'] as const;
 export const feedKey = (sportId: number) =>

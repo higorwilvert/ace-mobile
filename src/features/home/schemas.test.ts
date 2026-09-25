@@ -1,5 +1,6 @@
 import {
   makeFeed,
+  makeFeedItem,
   makeHome,
   makeMatchResult,
   makeRecommendedPlayer,
@@ -47,7 +48,7 @@ describe('Início como feed (T38)', () => {
   });
 
   it('descreve resultado de amigos com vencedor, empate e placar', () => {
-    const item = home.friendActivity[0];
+    const item = makeFeedItem();
     expect(activityLine(item)).toEqual({
       title: `${bruno} venceu Camila`,
       score: '6-4 · 6-3',

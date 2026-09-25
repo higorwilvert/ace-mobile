@@ -17,6 +17,7 @@ import { SportIcon } from '@/components/ace/sport-icon';
 import { TierTag } from '@/components/ace/tier-badge';
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
+import { ActivityFeed } from '@/features/activity/activity-feed';
 import { InviteCard } from '@/features/invites/invite-card';
 import { formatWhen, matchTitle } from '@/features/matches/schemas';
 import { exactNumber } from '@/features/players/division-card';
@@ -27,9 +28,8 @@ import {
 import { firstName } from '@/lib/utils';
 import type { PublicUser, User } from '@/types/api';
 
-import type { FriendActivity, Home } from './api';
+import type { Home } from './api';
 import {
-  activityLine,
   generatedLabel,
   noticeText,
   pendingCount,
@@ -99,6 +99,7 @@ function Row({
   icon,
   title,
   detail,
+  spokenExtra,
   trailing,
   children,
 }: {
@@ -107,14 +108,20 @@ function Row({
   icon?: ReactNode;
   title: string;
   detail?: string;
+  /** Texto dos `children` para o leitor de tela (ex.: os times). */
+  spokenExtra?: string;
   trailing?: ReactNode;
   children?: ReactNode;
 }) {
   const router = useRouter();
+  // Leitor de tela ouve a ação e o conteúdo da linha, não só a ação.
+  const spoken = [
+    ...new Set([label, title, detail, spokenExtra].filter(Boolean)),
+  ];
   return (
     <Pressable
       accessibilityRole='button'
-      accessibilityLabel={label}
+      accessibilityLabel={spoken.join('. ')}
       className='min-h-12 flex-row items-center gap-3 rounded-card bg-background px-3 py-2.5 active:opacity-80'
       onPress={() => router.push(href)}
     >
@@ -222,6 +229,10 @@ function SuggestionNotice({
 function NextMatch({ home, viewerId }: { home: Home; viewerId: string }) {
   const next = home.nextMatch;
   const others = home.upcomingCount - (next ? 1 : 0);
+  const side = (index: number) => {
+    const players = next?.teams.find((t) => t.teamIndex === index)?.players;
+    return players?.length ? teamLabel(players, viewerId) : 'vagas abertas';
+  };
   return (
     <Section
       title='Próxima partida'
@@ -235,6 +246,7 @@ function NextMatch({ home, viewerId }: { home: Home; viewerId: string }) {
             icon={<SportIcon slug={next.match.sport.slug} size={44} />}
             title={matchTitle(next.match)}
             detail={`${formatWhen(next.match.scheduledAt)} · ${next.match.arena?.name ?? next.match.locationText ?? next.match.city}`}
+            spokenExtra={`${side(1)} contra ${side(2)}`}
           >
             <View className='flex-row flex-wrap items-center gap-x-2 gap-y-1 pt-1'>
               {[1, 2].map((index) => {
@@ -248,11 +260,7 @@ function NextMatch({ home, viewerId }: { home: Home; viewerId: string }) {
                       </Text>
                     )}
                     <Faces players={players} />
-                    <Text variant='muted'>
-                      {players.length
-                        ? teamLabel(players, viewerId)
-                        : 'vagas abertas'}
-                    </Text>
+                    <Text variant='muted'>{side(index)}</Text>
                   </View>
                 );
               })}
@@ -487,39 +495,6 @@ function Suggestions({
   );
 }
 
-function Activity({ items }: { items: FriendActivity[] }) {
-  return (
-    <Section title='Atividade dos amigos'>
-      {items.length ? (
-        items.map((item) => {
-          const line = activityLine(item);
-          const friends = item.teams
-            .flatMap((t) => t.players)
-            .filter((p) => item.friendIds.includes(p.id));
-          return (
-            <Row
-              key={item.match.id}
-              label={line.title}
-              href={`/matches/${item.match.id}`}
-              icon={<Faces players={friends} />}
-              title={line.title}
-              detail={`${line.score} · ${item.match.sport.name} · ${generatedLabel(item.result.recordedAt)}`}
-            />
-          );
-        })
-      ) : (
-        <Row
-          label='Encontrar jogadores'
-          href='/players'
-          icon={<Users size={20} color={brand} />}
-          title='Nada por aqui ainda'
-          detail='Quando seus amigos registrarem resultados, eles aparecem aqui.'
-        />
-      )}
-    </Section>
-  );
-}
-
 /** Início como feed (T38): só apresenta o que `GET /users/me/home` agregou. */
 export function HomeSections({
   home,
@@ -549,7 +524,7 @@ export function HomeSections({
       <NextMatch home={home} viewerId={viewer.id} />
       <Pending home={home} viewerId={viewer.id} />
       <Suggestions home={home} refreshing={refreshing} errors={errors} />
-      <Activity items={home.friendActivity} />
+      <ActivityFeed viewerId={viewer.id} />
     </>
   );
 }

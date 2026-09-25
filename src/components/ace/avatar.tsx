@@ -8,7 +8,7 @@ import { cn, getFirstAndLastLetter } from '@/lib/utils';
 // https de qualquer origem, ou a mídia local da API em dev. No modo local a
 // API grava a origem que ela conhece (ex.: localhost), que o celular não
 // alcança: o caminho /v1/media/ é reapontado para a origem que o app usa.
-function imageUri(url: string): string | null {
+export function imageUri(url: string): string | null {
   try {
     const parsed = new URL(url);
     if (parsed.protocol === 'https:') return url;

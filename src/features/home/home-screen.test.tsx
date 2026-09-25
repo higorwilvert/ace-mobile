@@ -3,6 +3,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { api } from '@/lib/api-client';
 import {
   makeFeed,
+  makeFeedItem,
   makeHome,
   makeInvite,
   makeMatch,
@@ -34,12 +35,17 @@ const mockApi = (home: Home | (() => Home) = makeHome(), feed = makeFeed()) =>
           }
         : config.url === '/v1/recommendations/refresh'
           ? { status: 200, data: { data: feed } }
-          : String(config.url).endsWith('/accept')
+          : config.url === '/v1/feed'
             ? {
                 status: 200,
-                data: { data: makeInvite({ status: 'ACCEPTED' }) },
+                data: { data: [makeFeedItem()], meta: { nextCursor: null } },
               }
-            : { status: 404, data: {} },
+            : String(config.url).endsWith('/accept')
+              ? {
+                  status: 200,
+                  data: { data: makeInvite({ status: 'ACCEPTED' }) },
+                }
+              : { status: 404, data: {} },
     ),
   );
 const calls = (spy: jest.SpyInstance, url: string) =>
@@ -68,8 +74,8 @@ describe('HomeScreen (T38)', () => {
     expect(screen.getByText('Pendências')).toBeOnTheScreen();
     expect(screen.getByText('Aguardando placar')).toBeOnTheScreen();
     expect(screen.getByText('Sugestões para você')).toBeOnTheScreen();
-    expect(screen.getByText('Atividade dos amigos')).toBeOnTheScreen();
-    expect(screen.getByText('Bruno venceu Camila')).toBeOnTheScreen();
+    expect(screen.getByText('Atividade')).toBeOnTheScreen();
+    expect(await screen.findByText('Bruno venceu Camila')).toBeOnTheScreen();
     expect(
       screen.queryByText('Jogadores e partidas para você'),
     ).not.toBeOnTheScreen();
@@ -204,7 +210,6 @@ describe('HomeScreen (T38)', () => {
         nextMatch: null,
         upcomingCount: 0,
         suggestions: null,
-        friendActivity: [],
         pending: {
           invites: [],
           invitesTotal: 0,

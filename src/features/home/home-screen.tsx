@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { Logo } from '@/components/ace/logo';
 import { ErrorState, LoadingState } from '@/components/ace/states';
 import { Screen } from '@/components/ui/screen';
+import { activityKeys } from '@/features/activity/api';
 import { useSession } from '@/features/auth/session';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { useRefetchOnFocus } from '@/hooks/use-refetch-on-focus';
@@ -70,7 +71,12 @@ export function HomeScreen() {
       scroll
       edges={['top']}
       className='gap-5 pt-4'
-      onRefresh={() => home.refetch()}
+      onRefresh={() =>
+        Promise.all([
+          home.refetch(),
+          queryClient.invalidateQueries({ queryKey: activityKeys.feed }),
+        ])
+      }
     >
       <View className='flex-row items-center justify-between'>
         <Logo width={72} />

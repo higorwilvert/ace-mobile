@@ -1,8 +1,9 @@
+import type { FeedItem } from '@/features/activity/api';
 import type { RecommendationResponse } from '@/features/recommendations/api';
 import { scoreline } from '@/features/results/schemas';
 import type { PublicUser } from '@/types/api';
 
-import type { Feed, FriendActivity, Home, KindError } from './api';
+import type { Feed, Home, KindError } from './api';
 
 type Kind = 'players' | 'matches';
 const KINDS: Kind[] = ['players', 'matches'];
@@ -32,8 +33,14 @@ export function teamLabel(players: PublicUser[], viewerId?: string) {
   return joinNames([...mine, ...others]);
 }
 
-/** "Juliana e Gabriela venceram Camila e Larissa" + placar do lado vencedor. */
-export function activityLine(item: FriendActivity) {
+/**
+ * "Juliana e Gabriela venceram Camila e Larissa" + placar do lado vencedor;
+ * com `viewerId`, o próprio usuário vira "Você" ("…venceram você e Bruno").
+ */
+export function activityLine(
+  item: Pick<FeedItem, 'teams' | 'result'>,
+  viewerId?: string,
+) {
   const team = (index: 1 | 2) =>
     item.teams.find((t) => t.teamIndex === index)?.players ?? [];
   const { result } = item;
@@ -50,7 +57,7 @@ export function activityLine(item: FriendActivity) {
       ? 'venceram'
       : 'venceu';
   return {
-    title: `${teamLabel(winners)} ${verb} ${teamLabel(team(first === 1 ? 2 : 1))}`,
+    title: `${teamLabel(winners, viewerId)} ${verb} ${teamLabel(team(first === 1 ? 2 : 1), viewerId).replace(/^Você/, 'você')}`,
     score: scoreline(
       result.sets.map((set) => ({
         a: set[own],

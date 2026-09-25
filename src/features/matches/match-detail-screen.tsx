@@ -37,6 +37,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { TextField } from '@/components/ui/text-field';
 import palette from '@/config/palette.json';
+import { MatchSocial } from '@/features/activity/match-social';
 import { useSession } from '@/features/auth/session';
 import { acceptInvite, declineInvite } from '@/features/invites/api';
 import { InviteSheet } from '@/features/invites/invite-sheet';
@@ -532,6 +533,7 @@ export function MatchDetailScreen() {
       </Panel>
 
       <ResultPanel match={m} />
+      {m.status === 'COMPLETED' && <MatchSocial matchId={m.id} />}
       {isCreator && permissions.canManage && (
         <View className='gap-2'>
           <Pressable
