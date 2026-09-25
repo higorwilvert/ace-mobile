@@ -39,6 +39,20 @@
         {
           "photosPermission": "O ACE usa sua galeria para você escolher a foto de perfil."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#0052be"
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.br.com.acematchmaking.mobile",
+          "bundleIdentifier": "br.com.acematchmaking.mobile.widgets"
+        }
       ]
     ],
     "experiments": {

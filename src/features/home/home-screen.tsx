@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
+import { View } from 'react-native';
 
 import { Logo } from '@/components/ace/logo';
 import { ErrorState, LoadingState } from '@/components/ace/states';
 import { Screen } from '@/components/ui/screen';
 import { useSession } from '@/features/auth/session';
+import { NotificationBell } from '@/features/notifications/notification-bell';
 import { useRefetchOnFocus } from '@/hooks/use-refetch-on-focus';
 
 import {
@@ -70,7 +72,10 @@ export function HomeScreen() {
       className='gap-5 pt-4'
       onRefresh={() => home.refetch()}
     >
-      <Logo width={72} />
+      <View className='flex-row items-center justify-between'>
+        <Logo width={72} />
+        <NotificationBell />
+      </View>
       {home.isPending ? (
         <LoadingState label='Carregando seu início…' />
       ) : home.isError ? (
