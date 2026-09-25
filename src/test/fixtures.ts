@@ -1,4 +1,5 @@
 import type { Friend, FriendRequest } from '@/features/friends/api';
+import type { Feed, Home } from '@/features/home/api';
 import type { Invite, MyInvite } from '@/features/invites/api';
 import type {
   Application,
@@ -604,6 +605,88 @@ export function makeSearchItem(
     profileVisibility: 'PUBLIC',
     sports: [{ id: 1, slug: 'padel', name: 'Padel', tier: makeTier() }],
     relationship: makeRelationship(),
+    ...overrides,
+  };
+}
+
+// ---- Início como feed (T38)
+
+export function makeFeed(overrides: Partial<Feed> = {}): Feed {
+  return {
+    sportId: makeSport().id,
+    generated: ['players', 'matches'],
+    players: makePlayerRecommendations(),
+    matches: makeMatchRecommendations(),
+    ...overrides,
+  };
+}
+/** Ana: próxima partida com Bruno, 2 candidaturas, 1 placar, 2 pedidos, 1 convite. */
+export function makeHome(overrides: Partial<Home> = {}): Home {
+  const sport = makeSport();
+  const me = makeUser();
+  return {
+    principal: {
+      sport: { id: sport.id, slug: sport.slug, name: sport.name },
+      rating: 1372.4,
+      matchesPlayed: 12,
+      tier: makeTier(),
+    },
+    nextMatch: {
+      match: makeMatch({ status: 'CONFIRMED' }),
+      teams: [
+        {
+          teamIndex: 1,
+          players: [
+            {
+              id: me.id,
+              fullName: me.fullName,
+              avatarUrl: null,
+              city: me.city,
+              state: me.state,
+            },
+            otherPlayer,
+          ],
+        },
+        { teamIndex: 2, players: [] },
+      ],
+    },
+    upcomingCount: 3,
+    pending: {
+      invites: [makeMyInvite()],
+      invitesTotal: 1,
+      applications: [{ match: makeMatch(), pendingCount: 2 }],
+      applicationsTotal: 2,
+      results: [makeMatch({ status: 'CONFIRMED' })],
+      resultsTotal: 1,
+      friendRequests: 2,
+      availability: true,
+    },
+    suggestions: {
+      sportId: sport.id,
+      stale: false,
+      players: { ...makePlayerRecommendations(), total: 8 },
+      matches: { ...makeMatchRecommendations(), total: 4 },
+    },
+    friendActivity: [
+      {
+        match: makeMatch({ status: 'COMPLETED' }),
+        result: makeMatchResult(),
+        teams: [
+          { teamIndex: 1, players: [otherPlayer] },
+          {
+            teamIndex: 2,
+            players: [
+              {
+                ...otherPlayer,
+                id: '0c8f2a54-1d2e-4f3a-9b8c-7d6e5f4a3b2c',
+                fullName: 'Camila Schmitt',
+              },
+            ],
+          },
+        ],
+        friendIds: [otherPlayer.id],
+      },
+    ],
     ...overrides,
   };
 }

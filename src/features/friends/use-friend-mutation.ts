@@ -45,6 +45,7 @@ export function useFriendMutation<TVariables, TData>(
         queryClient.invalidateQueries({ queryKey: ['private', 'player'] }),
         queryClient.invalidateQueries({ queryKey: ['private', 'search'] }),
         queryClient.invalidateQueries({ queryKey: inboxKey }),
+        queryClient.invalidateQueries({ queryKey: ['private', 'home'] }),
       ]),
   });
 }

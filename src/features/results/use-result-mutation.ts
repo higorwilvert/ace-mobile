@@ -51,6 +51,7 @@ export function useResultMutation<TVariables, TData>(
           ['private', 'player'],
           ['private', 'sport-profiles'],
           inboxKey,
+          ['private', 'home'],
         ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
       ),
   });

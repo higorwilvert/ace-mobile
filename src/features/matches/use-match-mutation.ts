@@ -48,6 +48,13 @@ export function useMatchMutation<TVariables, TData>(
         queryClient.invalidateQueries({
           queryKey: ['private', 'my-applications'],
         }),
+        queryClient.invalidateQueries({ queryKey: ['private', 'home'] }),
+        // Candidatura muda a elegibilidade: o feed é relido na próxima troca
+        // de aba, sem tirar agora o card "Candidatura enviada" da tela.
+        queryClient.invalidateQueries({
+          queryKey: ['private', 'recommendations'],
+          refetchType: 'none',
+        }),
       ]),
   });
 }

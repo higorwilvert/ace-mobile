@@ -1,10 +1,18 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import {
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react-native';
+import { useState } from 'react';
+import { Alert, Pressable, Text } from 'react-native';
 import { toast } from 'sonner-native';
 
+import { noticeKey } from '@/features/home/api';
 import { api, ApiError } from '@/lib/api-client';
 import {
   makeApplication,
+  makeFeed,
   makeMatch,
   makeMatchDetail,
   makeMatchRecommendations,
@@ -49,6 +57,11 @@ const mockApi = (
       return Promise.resolve({ status: 200, data: { data: [makeSport()] } });
     if (url === '/v1/users/me/sport-profiles')
       return Promise.resolve({ status: 200, data: { data: profiles } });
+    if (url === '/v1/recommendations/refresh')
+      return Promise.resolve({
+        status: 200,
+        data: { data: makeFeed({ generated: [] }) },
+      });
     if (url === '/v1/recommendations/players')
       return Promise.resolve({
         status: 201,
@@ -80,8 +93,13 @@ beforeEach(async () => {
 });
 afterEach(() => jest.restoreAllMocks());
 
-describe('RecommendationsScreen', () => {
-  it('não gera nada ao abrir; o botão dispara o POST e a lista preserva a ordem da API', async () => {
+const refreshWith = (feed: ReturnType<typeof makeFeed>) => (c: Config) =>
+  c.url === '/v1/recommendations/refresh'
+    ? { status: 200, data: { data: feed } }
+    : undefined;
+
+describe('RecommendationsScreen (T38)', () => {
+  it('abre direto na lista da modalidade principal, com uma chamada e a ordem da API', async () => {
     const second = makeRecommendedPlayer({
       recommendationId: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
       rank: 2,
@@ -98,27 +116,21 @@ describe('RecommendationsScreen', () => {
         fullName: 'Carla Nunes',
       },
     });
-    const spy = mockApi((c) =>
-      c.url === '/v1/recommendations/players'
-        ? {
-            status: 201,
-            data: makePlayerRecommendations([makeRecommendedPlayer(), second]),
-          }
-        : undefined,
+    const spy = mockApi(
+      refreshWith(
+        makeFeed({
+          generated: [],
+          players: makePlayerRecommendations([makeRecommendedPlayer(), second]),
+        }),
+      ),
     );
     renderWithQuery(<RecommendationsScreen />);
-    expect(await screen.findByText('Buscar sugestões')).toBeOnTheScreen();
-    expect(
-      screen.getByText('Sua próxima conexão começa aqui'),
-    ).toBeOnTheScreen();
-    expect(generations(spy)).toHaveLength(0);
-    fireEvent.press(screen.getByText('Buscar sugestões'));
     expect(await screen.findByText('2 sugestões para você')).toBeOnTheScreen();
     expect(generations(spy)).toEqual([
       expect.objectContaining({
         method: 'POST',
-        url: '/v1/recommendations/players',
-        data: { sportId: 1, teamSize: 2, mode: 'SAME_GENDER', limit: 10 },
+        url: '/v1/recommendations/refresh',
+        data: { sportId: 1 },
       }),
     ]);
     expect(
@@ -129,22 +141,102 @@ describe('RecommendationsScreen', () => {
     expect(
       screen.getByLabelText('Compatibilidade 82,5 de 100'),
     ).toBeOnTheScreen();
-    expect(
-      screen.getByLabelText('Compatibilidade 66,3 de 100'),
-    ).toBeOnTheScreen();
     expect(screen.getAllByText('Compatibilidade de nível')).toHaveLength(2);
     expect(
-      screen.getByText(
-        'Sem filtro de agenda. Combine o horário antes de convidar.',
+      screen.queryByText('Sua próxima conexão começa aqui'),
+    ).not.toBeOnTheScreen();
+    expect(screen.queryByText('ENCONTRE O JOGO CERTO')).not.toBeOnTheScreen();
+    expect(screen.getByText('Atualizar')).toBeOnTheScreen();
+  });
+
+  it('limpa o aviso de sugestões novas do Início ao abrir', async () => {
+    mockApi();
+    // A aba monta depois do aviso existir (como ao tocar em "Para você").
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return open ? (
+        <RecommendationsScreen />
+      ) : (
+        <Pressable onPress={() => setOpen(true)}>
+          <Text>abrir</Text>
+        </Pressable>
+      );
+    }
+    const { queryClient } = renderWithQuery(<Host />);
+    queryClient.setQueryData(noticeKey, { sportId: 1, players: 2, matches: 0 });
+    fireEvent.press(screen.getByText('abrir'));
+    await screen.findByText('1 sugestão para você');
+    expect(queryClient.getQueryData(noticeKey)).toBeNull();
+  });
+
+  it('Atualizar gera com os parâmetros da geração exibida', async () => {
+    const spy = mockApi();
+    renderWithQuery(<RecommendationsScreen />);
+    fireEvent.press(await screen.findByText('Atualizar'));
+    await waitFor(() =>
+      expect(generations(spy)).toContainEqual(
+        expect.objectContaining({
+          method: 'POST',
+          url: '/v1/recommendations/players',
+          data: { sportId: 1, teamSize: 2, mode: 'SAME_GENDER', limit: 10 },
+        }),
       ),
+    );
+  });
+
+  it('Ajustar busca abre a folha com o formulário e gera com os valores dele', async () => {
+    const spy = mockApi();
+    renderWithQuery(<RecommendationsScreen />);
+    fireEvent.press(await screen.findByText('Ajustar busca'));
+    fireEvent.press(await screen.findByText('Buscar sugestões'));
+    await waitFor(() =>
+      expect(generations(spy)).toContainEqual(
+        expect.objectContaining({ url: '/v1/recommendations/players' }),
+      ),
+    );
+  });
+
+  it('trocar Jogadores/Partidas não chama a API; trocar a modalidade chama', async () => {
+    const tennis = makeSport({ id: 2, slug: 'tenis', name: 'Tênis' });
+    const spy = mockApi(
+      (c) =>
+        c.url === '/v1/sports'
+          ? { status: 200, data: { data: [makeSport(), tennis] } }
+          : undefined,
+      [
+        makePlayerProfile(),
+        makePlayerProfile({
+          id: '8f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e51',
+          sportId: 2,
+          isPrincipal: false,
+          sport: tennis,
+        }),
+      ],
+    );
+    renderWithQuery(<RecommendationsScreen />);
+    await screen.findByText('1 sugestão para você');
+    fireEvent.press(
+      within(screen.getByLabelText('Tipo de recomendação')).getByRole(
+        'button',
+        { name: 'Partidas' },
+      ),
+    );
+    expect(
+      await screen.findByText('2 vagas · Time 2 sugerido'),
     ).toBeOnTheScreen();
-    expect(screen.getByText('Atualizar sugestões')).toBeOnTheScreen();
+    expect(generations(spy)).toHaveLength(1);
+    fireEvent.press(
+      within(screen.getByLabelText('Modalidade')).getByRole('button', {
+        name: 'Tênis',
+      }),
+    );
+    await waitFor(() => expect(generations(spy)).toHaveLength(2));
+    expect(generations(spy)[1]).toMatchObject({ data: { sportId: 2 } });
   });
 
   it('expõe o modo técnico e abre o convite restrito ao escopo da busca', async () => {
     const spy = mockApi();
     renderWithQuery(<RecommendationsScreen />);
-    fireEvent.press(await screen.findByText('Buscar sugestões'));
     fireEvent.press(await screen.findByText('Por que esta recomendação?'));
     fireEvent.press(screen.getByText('Detalhes técnicos'));
     expect(screen.getByText('ace-player-v1')).toBeOnTheScreen();
@@ -170,7 +262,6 @@ describe('RecommendationsScreen', () => {
     confirmApply();
     renderWithQuery(<RecommendationsScreen />);
     fireEvent.press(await screen.findByText('Partidas'));
-    fireEvent.press(await screen.findByText('Buscar sugestões'));
     expect(await screen.findByText('1 sugestão para você')).toBeOnTheScreen();
     expect(screen.getByText('2 vagas · Time 2 sugerido')).toBeOnTheScreen();
     expect(screen.queryByText('ace-match-v1')).not.toBeOnTheScreen(); // versão só ao expandir
@@ -189,6 +280,22 @@ describe('RecommendationsScreen', () => {
     expect(toast.success).toHaveBeenCalled();
   });
 
+  it('depois de se candidatar, voltar para Partidas relê o feed (a partida não volta)', async () => {
+    const spy = mockApi();
+    confirmApply();
+    renderWithQuery(<RecommendationsScreen />);
+    fireEvent.press(await screen.findByText('Partidas'));
+    fireEvent.press(await screen.findByText('Candidatar-me'));
+    expect(await screen.findByText('Candidatura enviada')).toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Jogadores'));
+    fireEvent.press(screen.getByText('Partidas'));
+    await waitFor(() =>
+      expect(
+        generations(spy).filter((c) => c.url === '/v1/recommendations/refresh'),
+      ).toHaveLength(2),
+    );
+  });
+
   it('409 na candidatura vira toast e mantém o botão', async () => {
     mockApi((c) =>
       c.method === 'POST' && String(c.url).endsWith('/applications')
@@ -198,7 +305,6 @@ describe('RecommendationsScreen', () => {
     confirmApply();
     renderWithQuery(<RecommendationsScreen />);
     fireEvent.press(await screen.findByText('Partidas'));
-    fireEvent.press(await screen.findByText('Buscar sugestões'));
     fireEvent.press(await screen.findByText('Candidatar-me'));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(screen.getByText('Candidatar-me')).toBeOnTheScreen();
@@ -206,19 +312,18 @@ describe('RecommendationsScreen', () => {
   });
 
   it('sem disponibilidade, partidas vêm vazias com o caminho para cadastrar', async () => {
-    mockApi((c) =>
-      c.url === '/v1/recommendations/matches'
-        ? {
-            status: 201,
-            data: makeMatchRecommendations([], {
-              availability: 'NOT_CONFIGURED',
-            }),
-          }
-        : undefined,
+    mockApi(
+      refreshWith(
+        makeFeed({
+          generated: [],
+          matches: makeMatchRecommendations([], {
+            availability: 'NOT_CONFIGURED',
+          }),
+        }),
+      ),
     );
     renderWithQuery(<RecommendationsScreen />);
     fireEvent.press(await screen.findByText('Partidas'));
-    fireEvent.press(await screen.findByText('Buscar sugestões'));
     expect(
       await screen.findByText(
         'Cadastre sua disponibilidade para encontrar partidas',
@@ -230,14 +335,21 @@ describe('RecommendationsScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/matches?sportId=1');
   });
 
-  it('erro da API fica no formulário e a nova busca é manual', async () => {
-    const spy = mockApi((c) =>
-      c.url === '/v1/recommendations/players'
-        ? Promise.reject(new ApiError('RATING_INITIALIZATION_REQUIRED', 400))
-        : undefined,
+  it('erro de regra em um tipo aparece só nele, com o caminho para corrigir', async () => {
+    mockApi(
+      refreshWith(
+        makeFeed({
+          generated: [],
+          players: {
+            error: {
+              code: 'RATING_INITIALIZATION_REQUIRED',
+              message: 'Atualize a categoria',
+            },
+          },
+        }),
+      ),
     );
     renderWithQuery(<RecommendationsScreen />);
-    fireEvent.press(await screen.findByText('Buscar sugestões'));
     expect(
       await screen.findByText(
         'Defina sua categoria nesta modalidade para inicializar o rating e receber recomendações.',
@@ -245,8 +357,8 @@ describe('RecommendationsScreen', () => {
     ).toBeOnTheScreen();
     fireEvent.press(screen.getByText('Revisar categoria'));
     expect(mockPush).toHaveBeenCalledWith('/sports');
-    expect(generations(spy)).toHaveLength(1);
-    expect(screen.getByText('Buscar sugestões')).toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Partidas'));
+    expect(await screen.findByText('1 sugestão para você')).toBeOnTheScreen();
   });
 
   it('sem perfil esportivo, convida a montar o perfil', async () => {

@@ -52,6 +52,7 @@ export function useInviteMutation<TVariables, TData>(
           queryKey: ['private', 'my-applications'],
         }),
         queryClient.invalidateQueries({ queryKey: inboxKey }),
+        queryClient.invalidateQueries({ queryKey: ['private', 'home'] }),
       ]),
   });
 }

@@ -1,7 +1,14 @@
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import palette from '@/config/palette.json';
 import { cn } from '@/lib/utils';
 
 export type ScreenProps = {
@@ -11,6 +18,8 @@ export type ScreenProps = {
   className?: string;
   /** Telas dentro das Tabs usam só `['top']`: a barra já cobre a base. */
   edges?: ('top' | 'bottom')[];
+  /** Puxar para atualizar (T38): o indicador fica até a promessa terminar. */
+  onRefresh?: () => Promise<unknown>;
 };
 
 export function Screen({
@@ -18,8 +27,10 @@ export function Screen({
   scroll = false,
   className,
   edges = ['top', 'bottom'],
+  onRefresh,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
   const padding = {
     paddingTop: edges.includes('top') ? insets.top : 0,
     paddingBottom: edges.includes('bottom') ? insets.bottom : 0,
@@ -41,6 +52,20 @@ export function Screen({
       style={padding}
     >
       <ScrollView
+        testID='screen-scroll'
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing}
+              tintColor={palette.colors.brand}
+              colors={[palette.colors.brand]}
+              onRefresh={() => {
+                setRefreshing(true);
+                void onRefresh().finally(() => setRefreshing(false));
+              }}
+            />
+          ) : undefined
+        }
         className='flex-1'
         contentContainerClassName={cn('grow px-5 pb-8', className)}
         keyboardShouldPersistTaps='handled'
