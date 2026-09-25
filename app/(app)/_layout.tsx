@@ -3,6 +3,8 @@ import { Redirect, Stack } from 'expo-router';
 import { LoadingState } from '@/components/ace/states';
 import palette from '@/config/palette.json';
 import { useSession } from '@/features/auth/session';
+import { useLiveMatch } from '@/features/notifications/use-live-match';
+import { usePushNotifications } from '@/features/notifications/use-push-notifications';
 
 // Qualquer tela empilhada (inclusive por deep link) nasce com as abas por
 // baixo, para sempre existir um "voltar".
@@ -10,6 +12,9 @@ export const unstable_settings = { anchor: '(tabs)' };
 
 export default function AppLayout() {
   const { status } = useSession();
+  // T41: push e Live Activity/Live Update vivem enquanto há sessão.
+  usePushNotifications(status === 'signed-in');
+  useLiveMatch(status);
   if (status === 'loading') return <LoadingState />;
   if (status === 'signed-out') return <Redirect href='/login' />;
   return (
@@ -63,6 +68,7 @@ export default function AppLayout() {
         options={{ title: 'Registrar placar' }}
       />
       <Stack.Screen name='history' options={{ title: 'Histórico' }} />
+      <Stack.Screen name='notifications' options={{ title: 'Notificações' }} />
     </Stack>
   );
 }

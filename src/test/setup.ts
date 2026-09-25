@@ -69,3 +69,23 @@ console.error = (...args: unknown[]) => {
     return;
   consoleError(...args);
 };
+
+// T41: push e Live Activity não existem no Jest (nem no Expo Go).
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn(async () => null),
+  getPermissionsAsync: jest.fn(async () => ({ status: 'denied' })),
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'denied' })),
+  getExpoPushTokenAsync: jest.fn(),
+  getLastNotificationResponse: jest.fn(() => null),
+  clearLastNotificationResponse: jest.fn(),
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  setBadgeCountAsync: jest.fn(async () => true),
+  AndroidImportance: { HIGH: 4 },
+}));
+jest.mock('expo-widgets', () => ({
+  createLiveActivity: () => ({ start: jest.fn(), getInstances: () => [] }),
+}));
