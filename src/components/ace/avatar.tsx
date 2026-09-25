@@ -5,14 +5,19 @@ import { Text } from '@/components/ui/text';
 import { env } from '@/config/env';
 import { cn, getFirstAndLastLetter } from '@/lib/utils';
 
-// https de qualquer origem, ou a própria API no modo local de dev — como no web.
-const mediaBase = new URL('/v1/media/', env.API_URL).href;
-function isSafeImageUrl(url: string) {
+// https de qualquer origem, ou a mídia local da API em dev. No modo local a
+// API grava a origem que ela conhece (ex.: localhost), que o celular não
+// alcança: o caminho /v1/media/ é reapontado para a origem que o app usa.
+function imageUri(url: string): string | null {
   try {
-    return new URL(url).protocol === 'https:' || url.startsWith(mediaBase);
+    const parsed = new URL(url);
+    if (parsed.protocol === 'https:') return url;
+    if (parsed.protocol === 'http:' && parsed.pathname.startsWith('/v1/media/'))
+      return new URL(parsed.pathname, env.API_URL).href;
   } catch {
-    return false;
+    /* Iniciais. */
   }
+  return null;
 }
 
 export function Avatar({
@@ -26,9 +31,10 @@ export function Avatar({
   size?: number;
   className?: string;
 }) {
-  // Imagem quebrada cai nas iniciais, como no web.
-  const [failed, setFailed] = useState(false);
-  const showImage = Boolean(url && isSafeImageUrl(url)) && !failed;
+  // Imagem quebrada cai nas iniciais, como no web; uma URL nova tenta de novo.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const uri = url ? imageUri(url) : null;
+  const showImage = uri !== null && uri !== failedUri;
   return (
     <View
       className={cn(
@@ -39,10 +45,10 @@ export function Avatar({
     >
       {showImage ? (
         <Image
-          source={{ uri: url ?? undefined }}
+          source={{ uri }}
           accessibilityLabel={`Foto de ${name}`}
           style={{ width: size, height: size }}
-          onError={() => setFailed(true)}
+          onError={() => setFailedUri(uri)}
         />
       ) : (
         <Text

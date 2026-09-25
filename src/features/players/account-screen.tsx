@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import {
   CalendarClock,
   ChevronRight,
@@ -19,7 +19,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { TextField } from '@/components/ui/text-field';
 import palette from '@/config/palette.json';
-import { authQueryOptions } from '@/features/auth/api';
+import { authQueryOptions, forgotPassword } from '@/features/auth/api';
 import { useSession } from '@/features/auth/session';
 import { errorMessage } from '@/lib/api-client';
 import { sessionEnded } from '@/lib/events';
@@ -109,6 +109,12 @@ export function AccountScreen() {
     mutationFn: signOut,
     onError: (error) => toast.error(errorMessage(error)),
   });
+  const reset = useMutation({
+    mutationFn: forgotPassword,
+    onSuccess: () =>
+      toast.success('Enviamos o link para trocar a senha ao seu e-mail.'),
+    onError: (error) => toast.error(errorMessage(error)),
+  });
   const visibility = useMutation({
     mutationFn: setVisibility,
     onMutate: (value) => setPrivateOverride(value === 'PRIVATE'),
@@ -151,13 +157,16 @@ export function AccountScreen() {
           <Text variant='muted'>E-mail da conta</Text>
           <Text>{user.email}</Text>
         </View>
-        <Link href='/forgot-password' asChild>
-          <Button
-            variant='secondary'
-            label='Redefinir minha senha'
-            className='self-start'
-          />
-        </Link>
+        {/* /forgot-password vive no grupo (auth), que manda quem está logado
+            para o Início: aqui o pedido sai direto para o e-mail da conta. */}
+        <Button
+          variant='secondary'
+          label='Redefinir minha senha'
+          busyLabel='Enviando…'
+          busy={reset.isPending}
+          className='self-start'
+          onPress={() => reset.mutate({ email: user.email })}
+        />
         <Text variant='muted'>
           Enviamos um link por e-mail; a troca acontece no navegador.
         </Text>

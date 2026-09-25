@@ -45,6 +45,28 @@ describe('AccountScreen', () => {
     await waitFor(() => expect(session.signOut).toHaveBeenCalledTimes(1));
   });
 
+  it('pede o link de troca de senha para o e-mail da conta sem sair da tela', async () => {
+    const spy = jest.spyOn(api, 'request').mockResolvedValue({
+      status: 202,
+      data: { message: 'ok' },
+    });
+    renderWithQuery(<AccountScreen />);
+    fireEvent.press(
+      screen.getByRole('button', { name: 'Redefinir minha senha' }),
+    );
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        'Enviamos o link para trocar a senha ao seu e-mail.',
+      ),
+    );
+    expect(spy.mock.calls[0][0]).toMatchObject({
+      method: 'POST',
+      url: '/v1/auth/forgot-password',
+      data: { email: 'ana@exemplo.com' },
+    });
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
   it('mantém a sessão e avisa quando a API recusa o logout', async () => {
     const session = mockSession({ status: 'signed-in', user: makeUser() });
     jest
