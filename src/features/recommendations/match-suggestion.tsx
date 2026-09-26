@@ -19,7 +19,6 @@ import { categoryRange, policyLabels } from '@/features/players/labels';
 import type { Sport } from '@/types/api';
 
 import type { RecommendationMeta, RecommendedMatch } from './api';
-import { Rank } from './player-suggestion';
 import { ScoreDetails, ScoreHeader } from './score-details';
 
 /**
@@ -61,7 +60,6 @@ export function MatchSuggestion({
   return (
     <View className='gap-4 rounded-panel border border-border bg-card p-4'>
       <View className='flex-row items-start gap-3'>
-        <Rank rank={item.rank} />
         <View className='flex-1 gap-0.5'>
           <Text variant='muted'>
             {`${sport.name} · ${policyLabels[m.genderPolicy]}`}

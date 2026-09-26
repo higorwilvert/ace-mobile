@@ -15,19 +15,6 @@ import type { RecommendationMeta, RecommendedPlayer } from './api';
 import { scopePolicy } from './schemas';
 import { ScoreDetails, ScoreHeader } from './score-details';
 
-export function Rank({ rank }: { rank: number }) {
-  return (
-    <View
-      className='h-8 w-8 items-center justify-center rounded-card bg-navy'
-      accessibilityLabel={`Posição ${rank}`}
-    >
-      <Text className='font-inter-bold text-sm text-white'>
-        {String(rank).padStart(2, '0')}
-      </Text>
-    </View>
-  );
-}
-
 /**
  * Jogador recomendado (RF26): quem é, quão compatível e por quê. "Convidar"
  * abre a folha de convite já restrita às minhas partidas com a modalidade,
@@ -53,7 +40,6 @@ export function PlayerSuggestion({
         className='flex-row items-center gap-3 active:opacity-80'
         onPress={() => router.push(`/players/${player.id}`)}
       >
-        <Rank rank={item.rank} />
         <Avatar name={player.fullName} url={player.avatarUrl} size={48} />
         <View className='flex-1 gap-0.5'>
           <Text variant='subtitle' numberOfLines={1}>

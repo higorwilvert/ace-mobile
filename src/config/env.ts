@@ -48,6 +48,11 @@ export function resolveApiUrl(input: {
     input.dev && input.hostUri
       ? `http://${input.hostUri.split(':')[0]}:${DEFAULT_API_PORT}`
       : undefined;
+  // Build nativa sem expo-dev-client não recebe hostUri do Metro.
+  if (!explicit && !fallback)
+    throw new Error(
+      'EXPO_PUBLIC_API_URL inválida: não definida — copie .env.example para .env',
+    );
   const result = parseApiOrigin(explicit ?? fallback ?? '', !input.dev);
   if ('issues' in result)
     throw new Error(

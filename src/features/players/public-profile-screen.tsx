@@ -251,12 +251,25 @@ export function PublicProfileScreen({ userId: own }: { userId?: string } = {}) {
       <View className='overflow-hidden rounded-panel border border-border bg-card'>
         <Cover>{isMe && <OwnProfileActions />}</Cover>
         <View className='-mt-11 gap-3 px-4 pb-4'>
-          <Avatar
-            name={data.fullName}
-            url={data.avatarUrl}
-            size={88}
-            className='border-4 border-card'
-          />
+          {/* Ação social ao lado do avatar, abaixo da capa. */}
+          <View className='flex-row items-end justify-between gap-2'>
+            <Avatar
+              name={data.fullName}
+              url={data.avatarUrl}
+              size={88}
+              className='border-4 border-card'
+            />
+            {social && data.relationship && (
+              <View className='flex-row items-center gap-2'>
+                <RelationshipButton
+                  userId={data.id}
+                  name={data.fullName}
+                  relationship={data.relationship}
+                  size='sm'
+                />
+              </View>
+            )}
+          </View>
           <View className='gap-1.5'>
             <Text variant='title'>{data.fullName}</Text>
             <View className='flex-row flex-wrap items-center gap-x-3 gap-y-1'>
@@ -322,18 +335,7 @@ export function PublicProfileScreen({ userId: own }: { userId?: string } = {}) {
               ))}
             </View>
           )}
-          {social && data.relationship && (
-            <View className='gap-2 pt-1'>
-              <View className='flex-row items-center gap-2'>
-                <RelationshipButton
-                  userId={data.id}
-                  name={data.fullName}
-                  relationship={data.relationship}
-                />
-              </View>
-              {social.hint && <Text variant='muted'>{social.hint}</Text>}
-            </View>
-          )}
+          {social?.hint && <Text variant='muted'>{social.hint}</Text>}
           {canInvite && (
             <View className='pt-1'>
               <Button
