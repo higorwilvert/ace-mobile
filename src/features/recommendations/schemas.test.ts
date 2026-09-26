@@ -62,13 +62,15 @@ describe('recommendationReasons', () => {
         },
         weights,
       ),
-    ).toEqual(['Compatibilidade de nível', 'Proximidade geográfica']); // 0,40 · 0,15 · 0,03 · 0,10
+    ).toEqual(['Compatibilidade de nível', 'Perto de você']); // 0,40 · 0,15 · 0,03 · 0,10
   });
   it('ignora fator zero e rotula proximidade por cidade e estado', () => {
-    expect(recommendationReasons(makeRecommendedPlayer(), weights)).toEqual([
-      'Compatibilidade de nível',
-      'Proximidade por cidade e estado',
-    ]);
+    expect(
+      recommendationReasons(
+        makeRecommendedPlayer({ distanceMethod: 'CITY_STATE' }),
+        weights,
+      ),
+    ).toEqual(['Compatibilidade de nível', 'Proximidade por cidade e estado']);
     expect(
       recommendationReasons(
         {
@@ -274,7 +276,10 @@ describe('textos dos resultados', () => {
       ...makePlayerRecommendations(),
     };
     expect(contextNote(players)).toMatch(/Sem filtro de agenda/);
-    expect(emptyCopy(players).cta.href).toBe('/sports');
+    expect(emptyCopy(players).cta.href).toBe('/personal');
+    expect(emptyCopy(players).description).toContain(
+      'dentro de 50 km de Florianópolis',
+    );
     const matches = { kind: 'matches' as const, ...makeMatchRecommendations() };
     expect(contextNote(matches)).toMatch(/próximos 14 dias/);
     expect(emptyCopy(matches).title).toBe('Nenhuma sugestão nesta busca');

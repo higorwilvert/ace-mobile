@@ -18,9 +18,13 @@ import type { User } from '@/types/api';
 import { updateUser } from './api';
 import { AvatarPicker } from './avatar-picker';
 import { genderOptions, handOptions } from './labels';
-import { personalSchema } from './schemas';
+import { personalSchema, SEARCH_RADII } from './schemas';
 
 const ufOptions = UFS.map((uf) => ({ value: uf, label: uf }));
+const radiusOptions = SEARCH_RADII.map((km) => ({
+  value: km,
+  label: `${km} km`,
+}));
 
 function PersonalForm({ user }: { user: User }) {
   const queryClient = useQueryClient();
@@ -32,6 +36,9 @@ function PersonalForm({ user }: { user: User }) {
     phone: user.phone ?? '',
     bio: user.bio ?? '',
     dominantHand: user.dominantHand ?? '',
+    searchRadiusKm: String(
+      user.searchRadiusKm,
+    ) as (typeof SEARCH_RADII)[number],
   });
   const [state, bio] = useWatch({
     control: form.control,
@@ -104,6 +111,13 @@ function PersonalForm({ user }: { user: User }) {
               ? 'Não foi possível carregar as cidades. Tente novamente.'
               : undefined
           }
+        />
+        <FormPickerField
+          name='searchRadiusKm'
+          label='Raio de busca'
+          placeholder='Selecione'
+          options={radiusOptions}
+          hint='Sugestões de jogadores e partidas só dentro desta distância da sua cidade.'
         />
         <FormTextField
           name='phone'

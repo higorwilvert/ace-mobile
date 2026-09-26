@@ -26,7 +26,7 @@ import type {
 } from './schemas';
 
 /** Vazio no formulário vira `null` no contrato (limpa o campo na API). */
-const blankToNull = <T extends Record<string, string>>(values: T) =>
+const blankToNull = <T extends Record<string, string | number>>(values: T) =>
   Object.fromEntries(
     Object.entries(values).map(([key, value]) => [
       key,

@@ -10,6 +10,8 @@ const phoneInput = z.union([
   z.literal(''),
   z.string().regex(/^\+?[0-9 ()-]{8,20}$/, 'Telefone inválido'),
 ]);
+// T48: raios que a API aceita (km); o seletor trabalha com texto.
+export const SEARCH_RADII = ['10', '25', '50', '100'] as const;
 export const personalSchema = z.object({
   fullName: plainText({
     min: 2,
@@ -21,6 +23,7 @@ export const personalSchema = z.object({
   phone: phoneInput,
   bio: optionalText(1000),
   dominantHand: z.union([handSchema, z.literal('')]),
+  searchRadiusKm: z.enum(SEARCH_RADII).transform(Number),
 });
 export type PersonalValues = z.output<typeof personalSchema>;
 

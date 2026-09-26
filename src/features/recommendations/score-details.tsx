@@ -8,6 +8,7 @@ import { formatWhen } from '@/features/matches/schemas';
 
 import type { RecommendationItem, RecommendationMeta } from './api';
 import {
+  distanceNote,
   factorLabels,
   factorOrder,
   formatScore,
@@ -151,11 +152,7 @@ export function ScoreDetails({
           comparação de nível.
         </Text>
       )}
-      <Text variant='muted'>
-        {item.distanceMethod === 'CITY_STATE'
-          ? 'A proximidade foi estimada por cidade e estado; não representa distância em quilômetros.'
-          : 'A proximidade usa a distância calculada pela API. Coordenadas pessoais não são exibidas.'}
-      </Text>
+      <Text variant='muted'>{distanceNote(item, meta)}</Text>
       <Disclosure title='Detalhes técnicos'>
         <Row label='Algoritmo' value={meta.algorithmVersion} />
         <Row label='Implementação' value={meta.implementationVersion} />

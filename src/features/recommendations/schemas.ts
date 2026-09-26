@@ -8,6 +8,7 @@ import {
   modeSchema,
   type RecommendationItem,
   type RecommendationKind,
+  type RecommendationMeta,
   type RecommendationMode,
   type RecommendationRequest,
   type RecommendationResponse,
@@ -57,7 +58,7 @@ export function recommendationReasons(
     distance:
       item.distanceMethod === 'CITY_STATE'
         ? 'Proximidade por cidade e estado'
-        : 'Proximidade geográfica',
+        : 'Perto de você',
     activity: 'Atividade esportiva',
     preferences: 'Preferências de jogo',
   };
@@ -224,18 +225,31 @@ export function contextNote(response: RecommendationResponse) {
       : 'Sem conflito com partidas já confirmadas no horário solicitado.';
   return 'Partidas públicas nos próximos 14 dias, sem conflito com suas partidas confirmadas.';
 }
+/** T48: distância entre pontos públicos (sede da cidade ou arena) e o raio usado. */
+export function distanceNote(
+  item: Pick<RecommendationItem, 'distanceMethod' | 'distanceKm'>,
+  meta: Pick<RecommendationMeta, 'location'>,
+) {
+  if (item.distanceMethod === 'CITY_STATE' || item.distanceKm === null)
+    return 'A proximidade foi estimada por cidade e estado; não representa distância em quilômetros.';
+  const { city, radiusKm } = meta.location;
+  const where =
+    item.distanceKm === 0 ? `Em ${city}` : `≈ ${item.distanceKm} km de ${city}`;
+  return `${where}, dentro do seu raio de busca de ${radiusKm} km. A distância é medida da sede da sua cidade; coordenadas pessoais não são usadas.`;
+}
 export type EmptyCopy = {
   title: string;
   description: string;
-  cta: { label: string; href: '/sports' };
+  cta: { label: string; href: '/personal' };
 };
 export function emptyCopy(response: RecommendationResponse): EmptyCopy {
+  const { city, radiusKm } = response.meta.location;
   return {
     title: 'Nenhuma sugestão nesta busca',
     description:
       response.kind === 'players'
-        ? 'As sugestões precisam de outros jogadores com perfil esportivo e rating utilizáveis, visíveis para você e compatíveis com a composição e a região. Perfis antigos sem categoria e sem partidas processadas precisam ser completados pelos próprios jogadores.'
-        : 'Não há partidas elegíveis nesta busca. Elas precisam ser públicas, futuras, com vaga, composição compatível e sem conflito com suas partidas confirmadas. Partidas que você organiza ou para as quais já se candidatou ficam de fora.',
-    cta: { label: 'Revisar perfil esportivo', href: '/sports' },
+        ? `Ninguém compatível dentro de ${radiusKm} km de ${city}. As sugestões precisam de jogadores com perfil esportivo e rating utilizáveis, visíveis para você, compatíveis com a composição e que também aceitem essa distância.`
+        : `Nenhuma partida elegível dentro de ${radiusKm} km de ${city}. Elas precisam ser públicas, futuras, com vaga, composição compatível e sem conflito com suas partidas confirmadas. Partidas que você organiza ou para as quais já se candidatou ficam de fora.`,
+    cta: { label: 'Aumentar raio de busca', href: '/personal' },
   };
 }

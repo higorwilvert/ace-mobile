@@ -42,6 +42,7 @@ export const userSchema = z.object({
   bio: z.string().nullable(),
   dominantHand: handSchema.nullable(),
   profileVisibility: profileVisibilitySchema,
+  searchRadiusKm: z.number().int().positive(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

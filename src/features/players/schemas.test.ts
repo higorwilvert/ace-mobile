@@ -17,6 +17,7 @@ const personalBase = {
   phone: '',
   bio: '',
   dominantHand: '',
+  searchRadiusKm: '50',
 };
 
 describe('personalSchema', () => {

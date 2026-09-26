@@ -34,6 +34,12 @@ const metaSchema = z.object({
   teamSize: teamIndexSchema,
   mode: modeSchema,
   limit: z.number().int().min(1).max(100),
+  // T48: origem (sede da cidade) e raio usados na geração.
+  location: z.object({
+    city: z.string(),
+    state: z.string(),
+    radiusKm: z.number().int().positive(),
+  }),
 });
 const itemSchema = z.object({
   recommendationId: z.string().uuid(),
@@ -41,7 +47,8 @@ const itemSchema = z.object({
   totalScore: score,
   scoreBreakdown: factorsSchema,
   coldStart: z.boolean(),
-  distanceMethod: z.enum(['COORDINATES', 'CITY_STATE']),
+  distanceMethod: z.enum(['COORDINATES', 'CITY_SEAT', 'CITY_STATE']),
+  distanceKm: z.number().int().min(0).nullable(),
 });
 export const recommendedMatchCardSchema = z.object({
   id: z.string().uuid(),

@@ -239,7 +239,7 @@ describe('RecommendationsScreen (T38)', () => {
     renderWithQuery(<RecommendationsScreen />);
     fireEvent.press(await screen.findByText('Por que esta recomendação?'));
     fireEvent.press(screen.getByText('Detalhes técnicos'));
-    expect(screen.getByText('ace-player-v1')).toBeOnTheScreen();
+    expect(screen.getByText('ace-player-v2')).toBeOnTheScreen();
     expect(screen.getAllByText('0.825000')).toHaveLength(2);
     fireEvent.press(screen.getByText('Informações desta geração'));
     expect(
@@ -264,7 +264,7 @@ describe('RecommendationsScreen (T38)', () => {
     fireEvent.press(await screen.findByText('Partidas'));
     expect(await screen.findByText('1 sugestão para você')).toBeOnTheScreen();
     expect(screen.getByText('2 vagas · Time 2 sugerido')).toBeOnTheScreen();
-    expect(screen.queryByText('ace-match-v1')).not.toBeOnTheScreen(); // versão só ao expandir
+    expect(screen.queryByText('ace-match-v2')).not.toBeOnTheScreen(); // versão só ao expandir
     fireEvent.press(screen.getByText('Candidatar-me'));
     await waitFor(() =>
       expect(spy).toHaveBeenCalledWith(
@@ -325,8 +325,8 @@ describe('RecommendationsScreen (T38)', () => {
     expect(
       await screen.findByText('Nenhuma sugestão nesta busca'),
     ).toBeOnTheScreen();
-    fireEvent.press(screen.getByText('Revisar perfil esportivo'));
-    expect(mockPush).toHaveBeenCalledWith('/sports');
+    fireEvent.press(screen.getByText('Aumentar raio de busca'));
+    expect(mockPush).toHaveBeenCalledWith('/personal');
     fireEvent.press(screen.getByText('Explorar partidas'));
     expect(mockPush).toHaveBeenCalledWith('/matches?sportId=1');
   });
