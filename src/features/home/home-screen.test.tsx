@@ -177,13 +177,13 @@ describe('HomeScreen (T38)', () => {
       staleHome(),
       makeFeed({
         matches: {
-          error: { code: 'X', message: 'Cadastre sua disponibilidade' },
+          error: { code: 'X', message: 'Falha ao carregar partidas' },
         },
       }),
     );
     renderWithQuery(<HomeScreen />);
     expect(
-      await screen.findByText('Cadastre sua disponibilidade'),
+      await screen.findByText('Falha ao carregar partidas'),
     ).toBeOnTheScreen();
     expect(screen.getByText('Sugestões para você')).toBeOnTheScreen();
     expect(
@@ -203,7 +203,7 @@ describe('HomeScreen (T38)', () => {
     expect(mockPush).toHaveBeenLastCalledWith('/players?view=requests');
   });
 
-  it('usuário novo: disponibilidade vira pendência e os blocos mostram vazios', async () => {
+  it('usuário novo: os blocos mostram vazios', async () => {
     mockApi(
       makeHome({
         principal: null,
@@ -218,15 +218,12 @@ describe('HomeScreen (T38)', () => {
           results: [],
           resultsTotal: 0,
           friendRequests: 0,
-          availability: false,
         },
       }),
     );
     renderWithQuery(<HomeScreen />);
-    fireEvent.press(await screen.findByLabelText(/^Definir horários/));
-    expect(mockPush).toHaveBeenLastCalledWith('/availability');
     expect(
-      screen.getByLabelText(/Nenhuma partida confirmada/),
+      await screen.findByLabelText(/Nenhuma partida confirmada/),
     ).toBeOnTheScreen();
     expect(screen.queryByText('Sugestões para você')).not.toBeOnTheScreen();
   });

@@ -36,9 +36,8 @@ describe('Início como feed (T38)', () => {
     );
   });
 
-  it('conta pendências e trata disponibilidade ausente como uma', () => {
+  it('conta pendências', () => {
     expect(pendingCount(home.pending)).toBe(6);
-    expect(pendingCount({ ...home.pending, availability: false })).toBe(7);
   });
 
   it('nomeia times pelo primeiro nome, com "Você" primeiro', () => {

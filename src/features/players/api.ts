@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { apiRequest } from '@/lib/api-client';
 import {
   apiEnvelope,
-  availabilitySchema,
   playerProfileSchema,
   profileVisibilitySchema,
   publicProfileSchema,
@@ -13,7 +12,6 @@ import {
   ratingTierSchema,
   relationshipSchema,
   sportSchema,
-  type Availability,
   type PlayerProfile,
   type ProfileVisibility,
   type PublicProfile,
@@ -22,7 +20,6 @@ import {
 } from '@/types/api';
 
 import type {
-  AvailabilityPayload,
   PersonalExtrasValues,
   PersonalValues,
   ProfilePayload,
@@ -145,37 +142,6 @@ export async function savePlayerProfile(
 
 export function deletePlayerProfile(id: string): Promise<void> {
   return apiRequest('DELETE', `/v1/users/me/sport-profiles/${id}`, z.void());
-}
-
-export const availabilityQuery = queryOptions({
-  queryKey: ['private', 'availability'],
-  queryFn: async ({ signal }) =>
-    (
-      await apiRequest(
-        'GET',
-        '/v1/users/me/availability',
-        apiEnvelope(z.array(availabilitySchema)),
-        undefined,
-        { signal },
-      )
-    ).data,
-});
-
-export async function saveAvailability(
-  body: AvailabilityPayload,
-  id?: string,
-): Promise<Availability> {
-  const { data } = await apiRequest(
-    id ? 'PATCH' : 'POST',
-    id ? `/v1/users/me/availability/${id}` : '/v1/users/me/availability',
-    apiEnvelope(availabilitySchema),
-    body,
-  );
-  return data;
-}
-
-export function deleteAvailability(id: string): Promise<void> {
-  return apiRequest('DELETE', `/v1/users/me/availability/${id}`, z.void());
 }
 
 export const playerProfileQuery = (userId: string) =>

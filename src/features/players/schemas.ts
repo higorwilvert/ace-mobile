@@ -2,13 +2,7 @@ import { z } from 'zod';
 
 import { plainText } from '@/lib/input-schemas';
 import { locationShape } from '@/lib/locations';
-import {
-  type Availability,
-  genderSchema,
-  handSchema,
-  sideSchema,
-  type Sport,
-} from '@/types/api';
+import { genderSchema, handSchema, sideSchema, type Sport } from '@/types/api';
 
 const optionalText = (max: number) =>
   z.union([z.literal(''), plainText({ min: 1, max })]);
@@ -129,62 +123,3 @@ export const profilePayload = (
     values.playFrequencyWeek === '' ? null : values.playFrequencyWeek,
   isPrincipal: values.isPrincipal,
 });
-
-const timeInput = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Horário inválido');
-
-export type AvailabilityPayload = {
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  timeZone: string;
-};
-
-export const availabilityFormSchema = (
-  existing: Availability[],
-  editingId?: string,
-) =>
-  z
-    .object({
-      dayOfWeek: z
-        .union([z.string(), z.number()])
-        .pipe(z.coerce.number().int().min(0).max(6)),
-      startTime: timeInput,
-      endTime: timeInput,
-      timeZone: z.string().min(1, 'Escolha o fuso'),
-    })
-    .superRefine((values, ctx) => {
-      if (values.endTime <= values.startTime) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['endTime'],
-          message: 'O fim precisa ser depois do início',
-        });
-        return;
-      }
-      const others = existing.filter((item) => item.id !== editingId);
-      // Janelas são [início, fim): encostar é válido, cruzar não.
-      const overlaps = others.some(
-        (item) =>
-          item.dayOfWeek === values.dayOfWeek &&
-          values.startTime < item.endTime &&
-          item.startTime < values.endTime,
-      );
-      if (overlaps)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['startTime'],
-          message: 'Esse horário se sobrepõe a outro período',
-        });
-      const zone = others[0]?.timeZone;
-      if (zone && zone !== values.timeZone)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['timeZone'],
-          message: 'Todos os seus horários precisam usar o mesmo fuso',
-        });
-    });
-export type AvailabilityInput = z.input<
-  ReturnType<typeof availabilityFormSchema>
->;

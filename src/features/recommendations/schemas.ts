@@ -216,45 +216,26 @@ export function recommendationPayload(
 }
 
 // ------------------------------------------------------------------ textos
-/** Nota de contexto do cabeçalho dos resultados, por `meta.availability` (copy do web). */
-export function availabilityNote(response: RecommendationResponse) {
+/** Nota de contexto do cabeçalho dos resultados (copy do web). */
+export function contextNote(response: RecommendationResponse) {
   if (response.kind === 'players')
-    return response.meta.availability === 'NOT_REQUESTED'
+    return response.meta.scheduledAt === null
       ? 'Sem filtro de agenda. Combine o horário antes de convidar.'
-      : response.meta.availability === 'TARGET_UNAVAILABLE'
-        ? 'Você não está disponível durante todo o horário solicitado. Ajuste a busca ou sua disponibilidade.'
-        : 'A disponibilidade de ambos foi verificada durante todo o horário solicitado.';
-  return response.meta.availability === 'NOT_CONFIGURED'
-    ? 'Cadastre sua disponibilidade para receber partidas compatíveis com sua agenda.'
-    : 'Partidas públicas nos próximos 14 dias, dentro da sua disponibilidade e sem conflitos confirmados.';
+      : 'Sem conflito com partidas já confirmadas no horário solicitado.';
+  return 'Partidas públicas nos próximos 14 dias, sem conflito com suas partidas confirmadas.';
 }
 export type EmptyCopy = {
   title: string;
   description: string;
-  cta: { label: string; href: '/availability' | '/sports' };
+  cta: { label: string; href: '/sports' };
 };
 export function emptyCopy(response: RecommendationResponse): EmptyCopy {
-  if (response.kind === 'players')
-    return {
-      title: 'Nenhuma sugestão nesta busca',
-      description:
-        'As sugestões precisam de outros jogadores com perfil esportivo e rating utilizáveis, visíveis para você e compatíveis com a composição e a região. Perfis antigos sem categoria e sem partidas processadas precisam ser completados pelos próprios jogadores.',
-      cta:
-        response.meta.availability === 'NOT_REQUESTED'
-          ? { label: 'Revisar perfil esportivo', href: '/sports' }
-          : { label: 'Revisar disponibilidade', href: '/availability' },
-    };
-  if (response.meta.availability === 'NOT_CONFIGURED')
-    return {
-      title: 'Cadastre sua disponibilidade para encontrar partidas',
-      description:
-        'Ainda não há horários no seu perfil. O ACE só recomenda partidas que caibam por inteiro na sua agenda. Cadastre os dias e horários em que você pode jogar e faça uma nova busca.',
-      cta: { label: 'Cadastrar disponibilidade', href: '/availability' },
-    };
   return {
     title: 'Nenhuma sugestão nesta busca',
     description:
-      'Não há partidas elegíveis nesta busca. Elas precisam ser públicas, futuras, com vaga, composição compatível e dentro da sua agenda. Partidas que você organiza ou para as quais já se candidatou ficam de fora.',
-    cta: { label: 'Revisar disponibilidade', href: '/availability' },
+      response.kind === 'players'
+        ? 'As sugestões precisam de outros jogadores com perfil esportivo e rating utilizáveis, visíveis para você e compatíveis com a composição e a região. Perfis antigos sem categoria e sem partidas processadas precisam ser completados pelos próprios jogadores.'
+        : 'Não há partidas elegíveis nesta busca. Elas precisam ser públicas, futuras, com vaga, composição compatível e sem conflito com suas partidas confirmadas. Partidas que você organiza ou para as quais já se candidatou ficam de fora.',
+    cta: { label: 'Revisar perfil esportivo', href: '/sports' },
   };
 }

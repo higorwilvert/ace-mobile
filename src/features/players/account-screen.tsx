@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import {
-  CalendarClock,
   ChevronRight,
   LogOut,
   ShieldAlert,
@@ -40,12 +39,6 @@ const shortcuts = [
     hint: 'Modalidades, categoria e principal',
     href: '/sports',
     Icon: Trophy,
-  },
-  {
-    label: 'Disponibilidade',
-    hint: 'Seus horários na semana',
-    href: '/availability',
-    Icon: CalendarClock,
   },
 ] as const;
 

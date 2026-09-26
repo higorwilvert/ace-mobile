@@ -311,26 +311,22 @@ describe('RecommendationsScreen (T38)', () => {
     expect(screen.queryByText('Candidatura enviada')).not.toBeOnTheScreen();
   });
 
-  it('sem disponibilidade, partidas vêm vazias com o caminho para cadastrar', async () => {
+  it('partidas vazias mostram o caminho para o perfil e para explorar', async () => {
     mockApi(
       refreshWith(
         makeFeed({
           generated: [],
-          matches: makeMatchRecommendations([], {
-            availability: 'NOT_CONFIGURED',
-          }),
+          matches: makeMatchRecommendations([]),
         }),
       ),
     );
     renderWithQuery(<RecommendationsScreen />);
     fireEvent.press(await screen.findByText('Partidas'));
     expect(
-      await screen.findByText(
-        'Cadastre sua disponibilidade para encontrar partidas',
-      ),
+      await screen.findByText('Nenhuma sugestão nesta busca'),
     ).toBeOnTheScreen();
-    fireEvent.press(screen.getByText('Cadastrar disponibilidade'));
-    expect(mockPush).toHaveBeenCalledWith('/availability');
+    fireEvent.press(screen.getByText('Revisar perfil esportivo'));
+    expect(mockPush).toHaveBeenCalledWith('/sports');
     fireEvent.press(screen.getByText('Explorar partidas'));
     expect(mockPush).toHaveBeenCalledWith('/matches?sportId=1');
   });

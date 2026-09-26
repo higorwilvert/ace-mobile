@@ -39,10 +39,6 @@ export default function AppLayout() {
       />
       <Stack.Screen name='personal' options={{ title: 'Dados pessoais' }} />
       <Stack.Screen name='sports' options={{ title: 'Meus esportes' }} />
-      <Stack.Screen
-        name='availability'
-        options={{ title: 'Disponibilidade' }}
-      />
       <Stack.Screen name='rating' options={{ title: 'Rating e evolução' }} />
       <Stack.Screen name='account' options={{ title: 'Conta' }} />
       <Stack.Screen name='players/index' options={{ title: 'Jogadores' }} />

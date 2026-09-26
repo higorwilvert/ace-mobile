@@ -11,13 +11,9 @@ const KINDS: Kind[] = ['players', 'matches'];
 export const isKindError = (value: object): value is KindError =>
   'error' in value;
 
-/** Ações pendentes; sem disponibilidade conta como uma (bloqueia partidas). */
+/** Ações pendentes. */
 export const pendingCount = (p: Home['pending']) =>
-  p.invitesTotal +
-  p.applicationsTotal +
-  p.resultsTotal +
-  p.friendRequests +
-  (p.availability ? 0 : 1);
+  p.invitesTotal + p.applicationsTotal + p.resultsTotal + p.friendRequests;
 
 const joinNames = (names: string[]) =>
   names.length <= 1

@@ -53,15 +53,6 @@ const messages: Record<string, string> = {
   SPORT_NOT_FOUND: 'Modalidade não encontrada. Atualize a lista.',
   SIDE_REQUIRED: 'Escolha o lado em que prefere jogar.',
   SIDE_NOT_APPLICABLE: 'Esta modalidade não utiliza preferência de lado.',
-  AVAILABILITY_INVALID_ORDER:
-    'O horário final deve ser depois do horário inicial, no mesmo dia.',
-  AVAILABILITY_OVERLAP:
-    'Esse horário se sobrepõe a outro período. Ajuste o intervalo.',
-  AVAILABILITY_TIME_ZONE_CONFLICT:
-    'Todos os seus horários precisam usar o mesmo fuso.',
-  AVAILABILITY_NOT_FOUND:
-    'Esse horário não está mais disponível. Atualize a página.',
-  TIME_ZONE_INVALID: 'Escolha um fuso horário válido.',
   USER_NOT_FOUND: 'Este jogador não está disponível.',
   RESOURCE_NOT_FOUND: 'O conteúdo que você procura não está disponível.',
   RATE_LIMITED:

@@ -122,8 +122,7 @@ describe('OnboardingScreen', () => {
       playFrequencyWeek: null,
       isPrincipal: true,
     });
-    fireEvent.press(screen.getByText('Definir minha disponibilidade'));
+    fireEvent.press(screen.getByText('Ir para o meu início'));
     expect(mockReplace).toHaveBeenCalledWith('/');
-    expect(mockPush).toHaveBeenCalledWith('/availability');
   });
 });

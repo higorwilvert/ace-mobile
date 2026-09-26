@@ -1,7 +1,6 @@
 import { api } from '@/lib/api-client';
 import { sessionToken } from '@/lib/token';
 import {
-  makeAvailability,
   makePlayerProfile,
   makePublicProfile,
   makeSearchItem,
@@ -14,7 +13,6 @@ import {
   deleteAvatar,
   deletePlayerProfile,
   playerProfileQuery,
-  saveAvailability,
   savePlayerProfile,
   searchPlayersQuery,
   setVisibility,
@@ -130,27 +128,6 @@ describe('players api', () => {
     expect(spy.mock.calls[1][0]).toMatchObject({
       method: 'PATCH',
       url: `/v1/users/me/sport-profiles/${profile.id}`,
-    });
-  });
-
-  it('saveAvailability envia o contrato de janela', async () => {
-    const window = makeAvailability();
-    const spy = jest.spyOn(api, 'request').mockResolvedValue(ok(window, 201));
-    await saveAvailability({
-      dayOfWeek: 1,
-      startTime: '19:00',
-      endTime: '21:00',
-      timeZone: 'America/Sao_Paulo',
-    });
-    expect(spy.mock.calls[0][0]).toMatchObject({
-      method: 'POST',
-      url: '/v1/users/me/availability',
-      data: {
-        dayOfWeek: 1,
-        startTime: '19:00',
-        endTime: '21:00',
-        timeZone: 'America/Sao_Paulo',
-      },
     });
   });
 

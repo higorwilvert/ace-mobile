@@ -46,7 +46,7 @@ import { MatchSuggestion } from './match-suggestion';
 import { PlayerSuggestion } from './player-suggestion';
 import { RecommendationForm } from './recommendation-form';
 import {
-  availabilityNote,
+  contextNote,
   emptyCopy,
   kindLabels,
   modeLabels,
@@ -108,7 +108,7 @@ function Results({
         <Text variant='muted'>
           {`${sport.name} · ${formatLabel(response.meta.teamSize)} · ${modeLabels[response.meta.mode]} · geradas ${formatWhen(response.meta.generatedAt)}`}
         </Text>
-        <Text variant='muted'>{availabilityNote(response)}</Text>
+        <Text variant='muted'>{contextNote(response)}</Text>
       </View>
       {n === 0 ? (
         <Empty response={response} sportId={sport.id} />

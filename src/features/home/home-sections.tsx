@@ -1,6 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
 import {
-  CalendarClock,
   ChevronRight,
   CircleDot,
   Sparkles,
@@ -313,16 +312,6 @@ function Pending({ home, viewerId }: { home: Home; viewerId: string }) {
           title='Monte seu perfil esportivo'
           detail='Sem modalidade, o ACE não calcula rating nem sugestões.'
           trailing={<Pill label='Adicionar' />}
-        />
-      )}
-      {!pending.availability && (
-        <Row
-          label='Definir horários'
-          href='/availability'
-          icon={<CalendarClock size={20} color={brand} />}
-          title='Cadastre quando você pode jogar'
-          detail='Sem horários, o ACE não recomenda partidas.'
-          trailing={<Pill label='Definir' />}
         />
       )}
       {pending.applications.map(({ match, pendingCount: n }) => (

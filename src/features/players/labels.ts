@@ -35,36 +35,6 @@ export const dayLabels = [
   'Sábado',
 ] as const;
 
-/** A API guarda 0 = domingo; a semana é exibida começando na segunda. */
-export const dayOrder = [1, 2, 3, 4, 5, 6, 0] as const;
-export const dayOptions = dayOrder.map((day) => ({
-  value: String(day),
-  label: dayLabels[day],
-}));
-
-const slots = Array.from({ length: 48 }, (_, index) => {
-  const hour = String(Math.floor(index / 2)).padStart(2, '0');
-  const minute = index % 2 ? '30' : '00';
-  return `${hour}:${minute}`;
-});
-export const startTimeOptions = slots.map((time) => ({
-  value: time,
-  label: time,
-}));
-// 23:59 é o fim mais tarde que a API aceita (o regex dela para em 23:59).
-export const endTimeOptions = [
-  ...slots.slice(1).map((time) => ({ value: time, label: time })),
-  { value: '23:59', label: '23:59' },
-];
-
-export const timeZoneOptions = [
-  { value: 'America/Sao_Paulo', label: 'Brasília (America/Sao_Paulo)' },
-  { value: 'America/Manaus', label: 'Manaus (America/Manaus)' },
-  { value: 'America/Rio_Branco', label: 'Rio Branco (America/Rio_Branco)' },
-  { value: 'America/Noronha', label: 'Fernando de Noronha' },
-  { value: 'UTC', label: 'UTC' },
-];
-
 export const categoryOptions = (sport: Sport | undefined) =>
   [...(sport?.categories ?? [])]
     .sort((a, b) => a.ordinal - b.ordinal)

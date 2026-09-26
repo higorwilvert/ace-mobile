@@ -1,6 +1,6 @@
 # ACE Mobile
 
-Aplicativo mobile do **ACE Matchmaking** (Expo SDK 57 / React Native). A base do T23 trouxe identidade de projeto, navegação autenticada, cliente HTTP com contrato Zod e sessão segura contra a API real (`../my-base-api`). O T24 acrescentou recuperação de senha, cadastro em assistente de cinco etapas com o primeiro perfil esportivo, dados pessoais, perfis esportivos, disponibilidade semanal, perfil público, privacidade e desativação de conta. O T30 trouxe partidas e candidaturas (busca com filtros e cursor, detalhe com a quadra, criar/editar/cancelar, candidatar, aprovar/recusar, minhas partidas e candidaturas). O T31 trouxe convites (enviar do detalhe ou do perfil, aceitar pela vaga, recusar, cancelar, caixa em Minhas com badge de pendências), registro de placar set a set com desfecho derivado e histórico com totais por modalidade. O T32 trouxe a aba **Para você** (recomendações de jogadores e partidas geradas pela API, com motivo curto, explicação por fator e modo técnico; convidar/candidatar-se direto da sugestão) e a tela **Rating e evolução** (Glicko-2 por modalidade, RD/σ e a variação por partida com os valores registrados pela API). Amigos chegam em T33.
+Aplicativo mobile do **ACE Matchmaking** (Expo SDK 57 / React Native). A base do T23 trouxe identidade de projeto, navegação autenticada, cliente HTTP com contrato Zod e sessão segura contra a API real (`../my-base-api`). O T24 acrescentou recuperação de senha, cadastro em assistente de cinco etapas com o primeiro perfil esportivo, dados pessoais, perfis esportivos, perfil público, privacidade e desativação de conta. O T30 trouxe partidas e candidaturas (busca com filtros e cursor, detalhe com a quadra, criar/editar/cancelar, candidatar, aprovar/recusar, minhas partidas e candidaturas). O T31 trouxe convites (enviar do detalhe ou do perfil, aceitar pela vaga, recusar, cancelar, caixa em Minhas com badge de pendências), registro de placar set a set com desfecho derivado e histórico com totais por modalidade. O T32 trouxe a aba **Para você** (recomendações de jogadores e partidas geradas pela API, com motivo curto, explicação por fator e modo técnico; convidar/candidatar-se direto da sugestão) e a tela **Rating e evolução** (Glicko-2 por modalidade, RD/σ e a variação por partida com os valores registrados pela API). Amigos chegam em T33.
 
 ## Começar
 
@@ -35,7 +35,7 @@ app/            rotas (Expo Router)  ≈ src/routes do web
   (app)/        Stack com guarda de sessão
     (tabs)/     index (Início), matches (Partidas: busca pública), mine (Minhas: partidas | candidaturas), profile (menu do Perfil)
     onboarding  etapas 3-5 do assistente (sem header; redireciona para / se já há perfil esportivo)
-    personal, sports, availability, account, search, players/[userId]  → telas empilhadas com header nativo
+    personal, sports, account, search, players/[userId]  → telas empilhadas com header nativo
     matches/new, matches/[matchId]/index, matches/[matchId]/edit         → nova partida, detalhe, edição
 src/
   components/ui    Text, Button, TextField, PickerField, Chips, Screen, Sheet (NativeWind + cva)
@@ -44,7 +44,7 @@ src/
   features/auth    api.ts, session.tsx, login, cadastro (assistente), esqueci-senha
   features/onboarding  etapas 3-5 e conclusão
   features/players api.ts, schemas.ts, labels.ts, sport-form + telas de pessoal, esportes,
-                   disponibilidade, conta, busca e perfil público
+                   conta, busca e perfil público
   features/matches api.ts (contrato + queries por cursor), schemas.ts (matchPermissions, formulário,
                    payload diff, search params), use-match-mutation, match-card, court-board + telas
                    explorar, detalhe (+ applications-panel), formulário e minhas (paged-list)
@@ -66,7 +66,7 @@ src/
   types/api.ts     contrato Zod (portado do web)
 ```
 
-URLs: `/` (Início), `/for-you` (Para você), `/rating`, `/matches` (filtros nos query params), `/matches/new`, `/matches/:id`, `/matches/:id/edit`, `/matches/:id/result`, `/mine?view&role&box&status`, `/history?sportId&userId`, `/profile`, `/onboarding`, `/personal`, `/sports`, `/availability`, `/account`, `/search`, `/players/:userId`, `/login`, `/register`, `/forgot-password`. `(app)` e `(tabs)` são grupos e não entram na URL; não existe `app/index.tsx`. O Stack de `(app)` redireciona quem não tem sessão para `/login`; o grupo `(auth)` manda quem já está logado para `/onboarding`, que decide entre o assistente e o Início.
+URLs: `/` (Início), `/for-you` (Para você), `/rating`, `/matches` (filtros nos query params), `/matches/new`, `/matches/:id`, `/matches/:id/edit`, `/matches/:id/result`, `/mine?view&role&box&status`, `/history?sportId&userId`, `/profile`, `/onboarding`, `/personal`, `/sports`, `/account`, `/search`, `/players/:userId`, `/login`, `/register`, `/forgot-password`. `(app)` e `(tabs)` são grupos e não entram na URL; não existe `app/index.tsx`. O Stack de `(app)` redireciona quem não tem sessão para `/login`; o grupo `(auth)` manda quem já está logado para `/onboarding`, que decide entre o assistente e o Início.
 
 Regras de camada (ESLint): `features/` não importa `app/`; `components|hooks|lib|types` não importam `features/`. Novos domínios entram como `src/features/<dominio>/` com `api.ts` + telas, como no web.
 
@@ -78,7 +78,7 @@ A API usa **Bearer opaco** com TTL absoluto de 30 dias e sem refresh. O token fi
 
 Requisições privadas só saem com token válido; um 401 só encerra a sessão se o token da resposta ainda for o atual. Logout revoga na API antes de limpar localmente. Respostas são validadas com Zod; erros chegam à interface só pelo mapa de códigos → mensagens em `src/lib/api-client.ts`. Nada além de `EXPO_PUBLIC_API_URL` entra no bundle; não há segredos no cliente.
 
-Limitações do escopo atual: a recuperação de senha só dispara o e-mail — a troca acontece no link, que abre no navegador; o avatar é uma URL HTTPS (não há upload na API); os horários de disponibilidade usam faixas de 30 minutos. Fora do escopo: push, offline, build nativa/EAS e publicação em loja.
+Limitações do escopo atual: a recuperação de senha só dispara o e-mail — a troca acontece no link, que abre no navegador; o avatar é uma URL HTTPS (não há upload na API). Fora do escopo: push, offline, build nativa/EAS e publicação em loja.
 
 ## Verificação
 

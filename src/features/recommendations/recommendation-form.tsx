@@ -225,7 +225,7 @@ export function RecommendationForm({
         <View className='gap-3 rounded-card bg-muted p-3'>
           <Text variant='muted'>
             {kind === 'players'
-              ? 'Só entram jogadores disponíveis durante todo o jogo.'
+              ? 'Só entram jogadores sem outra partida confirmada nesse horário.'
               : 'A partida inteira precisa caber neste intervalo, nos próximos 14 dias.'}
             {` Horários no fuso deste aparelho (${deviceTimeZone()}).`}
           </Text>

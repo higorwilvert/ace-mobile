@@ -7,7 +7,7 @@ import {
 } from '@/test/fixtures';
 
 import {
-  availabilityNote,
+  contextNote,
   defaultDraft,
   emptyCopy,
   formatScore,
@@ -267,30 +267,16 @@ describe('recommendationPayload', () => {
   });
 });
 
-describe('textos por disponibilidade', () => {
-  it('explica o contexto e o vazio conforme meta.availability', () => {
+describe('textos dos resultados', () => {
+  it('explica o contexto e o vazio', () => {
     const players = {
       kind: 'players' as const,
       ...makePlayerRecommendations(),
     };
-    expect(availabilityNote(players)).toMatch(/Sem filtro de agenda/);
+    expect(contextNote(players)).toMatch(/Sem filtro de agenda/);
     expect(emptyCopy(players).cta.href).toBe('/sports');
-    const unavailable = {
-      kind: 'players' as const,
-      ...makePlayerRecommendations([], { availability: 'TARGET_UNAVAILABLE' }),
-    };
-    expect(availabilityNote(unavailable)).toMatch(/não está disponível/);
-    expect(emptyCopy(unavailable).cta.href).toBe('/availability');
-    const noAgenda = {
-      kind: 'matches' as const,
-      ...makeMatchRecommendations([], { availability: 'NOT_CONFIGURED' }),
-    };
-    expect(emptyCopy(noAgenda)).toMatchObject({
-      title: 'Cadastre sua disponibilidade para encontrar partidas',
-      cta: { label: 'Cadastrar disponibilidade', href: '/availability' },
-    });
     const matches = { kind: 'matches' as const, ...makeMatchRecommendations() };
-    expect(availabilityNote(matches)).toMatch(/próximos 14 dias/);
+    expect(contextNote(matches)).toMatch(/próximos 14 dias/);
     expect(emptyCopy(matches).title).toBe('Nenhuma sugestão nesta busca');
   });
 });

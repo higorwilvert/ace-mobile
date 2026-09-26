@@ -173,18 +173,18 @@ describe('ACE HTTP trust boundary', () => {
     jest.spyOn(api, 'request').mockRejectedValue(
       failure(409, {
         error: {
-          code: 'AVAILABILITY_OVERLAP',
+          code: 'PROFILE_ALREADY_EXISTS',
           message: '<script>private details</script>',
         },
         requestId: 'request-123',
       }),
     );
     await expect(
-      apiRequest('POST', '/v1/users/me/availability', z.unknown(), {}),
+      apiRequest('POST', '/v1/users/me/sport-profiles', z.unknown(), {}),
     ).rejects.toMatchObject({
-      code: 'AVAILABILITY_OVERLAP',
+      code: 'PROFILE_ALREADY_EXISTS',
       requestId: 'request-123',
-      message: expect.stringContaining('sobrepõe'),
+      message: expect.stringContaining('perfil nesta modalidade'),
     });
   });
   it.each([

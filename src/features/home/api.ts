@@ -45,7 +45,6 @@ export const homeSchema = z.object({
     results: z.array(matchSummarySchema),
     resultsTotal: count,
     friendRequests: count,
-    availability: z.boolean(),
   }),
   suggestions: z
     .object({

@@ -22,7 +22,6 @@ import type {
   SportTotals,
 } from '@/features/results/api';
 import type {
-  Availability,
   PlayerProfile,
   PublicProfile,
   RatingTier,
@@ -166,20 +165,6 @@ export function makePlayerProfile(
     playFrequencyWeek: 2,
     createdAt: '2026-09-01T12:00:00.000Z',
     updatedAt: '2026-09-01T12:00:00.000Z',
-    ...overrides,
-  };
-}
-
-export function makeAvailability(
-  overrides: Partial<Availability> = {},
-): Availability {
-  return {
-    id: '1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
-    dayOfWeek: 1,
-    startTime: '19:00',
-    endTime: '21:00',
-    timeZone: 'America/Sao_Paulo',
-    createdAt: '2026-09-01T12:00:00.000Z',
     ...overrides,
   };
 }
@@ -497,7 +482,6 @@ export function makePlayerRecommendations(
       ...makeRecommendationMeta(),
       scheduledAt: null,
       durationMinutes: null,
-      availability: 'NOT_REQUESTED',
       ...meta,
     },
   };
@@ -557,7 +541,6 @@ export function makeMatchRecommendations(
       dateFrom: null,
       dateTo: null,
       latestStartAt: '2026-10-04T12:00:00.000Z',
-      availability: 'CHECKED',
       emptyMatchPolicy: 'EXCLUDE_NO_ROSTER',
       ...meta,
     },
@@ -660,7 +643,6 @@ export function makeHome(overrides: Partial<Home> = {}): Home {
       results: [makeMatch({ status: 'CONFIRMED' })],
       resultsTotal: 1,
       friendRequests: 2,
-      availability: true,
     },
     suggestions: {
       sportId: sport.id,

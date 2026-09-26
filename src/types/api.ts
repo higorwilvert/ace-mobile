@@ -75,14 +75,6 @@ export const playerProfileSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
-export const availabilitySchema = z.object({
-  id: z.string().uuid(),
-  dayOfWeek: z.number().int().min(0).max(6),
-  startTime: z.string(),
-  endTime: z.string(),
-  timeZone: z.string(),
-  createdAt: z.string().datetime(),
-});
 // Divisões ACE (T39, ace-tiers-v1): a API decide a divisão a partir do rating
 // exato e o cliente só desenha. O emblema é sempre um caminho da própria API;
 // um valor fora do formato vira null e o cliente desenha o escudo vetorial.
@@ -203,7 +195,6 @@ export type RatingTier = z.infer<typeof ratingTierSchema>;
 export type RatingTierDefinition = z.infer<typeof ratingTierDefinitionSchema>;
 export type TierDivision = z.infer<typeof tierDivisionSchema>;
 export type PlayerProfile = z.infer<typeof playerProfileSchema>;
-export type Availability = z.infer<typeof availabilitySchema>;
 export type PublicProfile = z.infer<typeof publicProfileSchema>;
 export type PublicUser = z.infer<typeof publicUserSchema>;
 export type Relationship = z.infer<typeof relationshipSchema>;

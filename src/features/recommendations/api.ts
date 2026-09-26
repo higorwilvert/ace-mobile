@@ -75,7 +75,6 @@ export const playerRecommendationsSchema = z.object({
   meta: metaSchema.extend({
     scheduledAt: z.string().datetime().nullable(),
     durationMinutes: z.number().int().nullable(),
-    availability: z.enum(['NOT_REQUESTED', 'CHECKED', 'TARGET_UNAVAILABLE']),
   }),
 });
 export const matchRecommendationsSchema = z.object({
@@ -89,7 +88,6 @@ export const matchRecommendationsSchema = z.object({
     dateFrom: z.string().datetime().nullable(),
     dateTo: z.string().datetime().nullable(),
     latestStartAt: z.string().datetime(),
-    availability: z.enum(['CHECKED', 'NOT_CONFIGURED']),
     emptyMatchPolicy: z.literal('EXCLUDE_NO_ROSTER'),
   }),
 });

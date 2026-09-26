@@ -30,7 +30,6 @@ describe('AccountScreen', () => {
     for (const [label, href] of [
       ['Dados pessoais', '/personal'],
       ['Meus esportes', '/sports'],
-      ['Disponibilidade', '/availability'],
     ] as const) {
       fireEvent.press(await screen.findByText(label));
       expect(mockPush).toHaveBeenCalledWith(href);

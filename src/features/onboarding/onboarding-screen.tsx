@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect, useRouter } from 'expo-router';
-import { CalendarClock, PartyPopper } from 'lucide-react-native';
+import { PartyPopper } from 'lucide-react-native';
 import { useState } from 'react';
 import { FormProvider, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
@@ -137,22 +137,12 @@ export function OnboardingScreen() {
               Tudo pronto.
             </Text>
             <Text variant='muted' className='text-center'>
-              Seu perfil esportivo está criado. Contar quando você costuma jogar
-              ajuda a encontrar partidas no seu horário.
+              Seu perfil esportivo está criado. Agora o ACE já pode sugerir
+              jogadores e partidas para você.
             </Text>
           </View>
           <View className='gap-3'>
             <Button
-              label='Definir minha disponibilidade'
-              icon={<CalendarClock size={18} color='#ffffff' />}
-              // Início por baixo: a disponibilidade empilha com voltar e abas.
-              onPress={() => {
-                router.replace('/');
-                router.push('/availability');
-              }}
-            />
-            <Button
-              variant='secondary'
               label='Ir para o meu início'
               onPress={() => router.replace('/')}
             />
