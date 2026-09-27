@@ -48,7 +48,7 @@ export function makeTier(overrides: Partial<RatingTier> = {}): RatingTier {
     next: { code: 'platina-ii', label: 'Platina II' },
     pointsToNext: 88,
     provisional: false,
-    imagePath: '/v1/tiers/padel/platina-i.webp?v=52b668a2',
+    imagePath: '/v1/tiers/platina-i.webp?v=52b668a2',
     ...overrides,
   };
 }

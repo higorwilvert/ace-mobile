@@ -77,8 +77,8 @@ export const playerProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 // Divisões ACE (T39, ace-tiers-v1): a API decide a divisão a partir do rating
-// exato e o cliente só desenha. O emblema é sempre um caminho da própria API;
-// um valor fora do formato vira null e o cliente desenha o escudo vetorial.
+// exato e o cliente só exibe a medalha. A imagem é um caminho da própria API;
+// um valor fora do formato vira null e o cliente mostra o A oficial da ACE.
 export const tierDivisionSchema = z.enum([
   'bronze',
   'prata',
@@ -97,7 +97,9 @@ export const ratingTierDefinitionSchema = z.object({
   maxRating: z.number().nullable(),
   imagePath: z
     .string()
-    .regex(/^\/v1\/tiers\/[a-z_]+\/[a-z]+-i{1,2}\.webp\?v=[0-9a-f]+$/)
+    .regex(
+      /^\/v1\/tiers\/(?:bronze|prata|ouro|platina|esmeralda|diamante)-(?:i|ii)\.webp\?v=[0-9a-f]{8}$/,
+    )
     .nullable()
     .catch(null),
 });
