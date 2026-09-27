@@ -514,7 +514,16 @@ export function CreateMatchScreen() {
             ? 'Rascunho salvo. Publique quando quiser.'
             : 'Partida publicada. Agora é só esperar as candidaturas.',
         );
-        router.replace(`/matches/${saved.id}`);
+        // T49: partida pública publicada já abre a folha de compartilhar.
+        router.replace({
+          pathname: '/matches/[matchId]',
+          params: {
+            matchId: saved.id,
+            ...(saved.status === 'OPEN' && saved.visibility === 'PUBLIC'
+              ? { share: '1' }
+              : {}),
+          },
+        });
       }}
     />
   );

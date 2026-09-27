@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Redirect, useRouter } from 'expo-router';
+import { type Href, Redirect, useRouter } from 'expo-router';
 import { PartyPopper } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
@@ -29,6 +29,7 @@ import { personalExtrasSchema } from '@/features/players/schemas';
 import { SportForm } from '@/features/players/sport-form';
 import { useZodForm } from '@/hooks/use-zod-form';
 import { EASE_OUT } from '@/lib/motion';
+import { clearPendingLink, peekPendingLink } from '@/lib/pending-link';
 import { formatPhone } from '@/lib/utils';
 import type { Sport } from '@/types/api';
 
@@ -102,6 +103,11 @@ export function OnboardingScreen() {
   const [sport, setSport] = useState<Sport | null>(null);
   const [done, setDone] = useState(false);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
+  // T49: quem abriu um link de partida volta para ela ao terminar.
+  const [destination] = useState<Href>(
+    () => (peekPendingLink() ?? '/') as Href,
+  );
+  useEffect(() => clearPendingLink(), []);
   const go = (next: 3 | 4 | 5) => {
     setDirection(next > step ? 'forward' : 'back');
     setStep(next);
@@ -114,7 +120,7 @@ export function OnboardingScreen() {
     );
   // `done` segura a tela de conclusão: sem isso, criar o perfil dispararia o
   // redirecionamento antes de o jogador ver o fim do assistente.
-  if (profiles.data.length > 0 && !done) return <Redirect href='/' />;
+  if (profiles.data.length > 0 && !done) return <Redirect href={destination} />;
 
   if (done)
     return (
@@ -143,8 +149,10 @@ export function OnboardingScreen() {
           </View>
           <View className='gap-3'>
             <Button
-              label='Ir para o meu início'
-              onPress={() => router.replace('/')}
+              label={
+                destination === '/' ? 'Ir para o meu início' : 'Ver a partida'
+              }
+              onPress={() => router.replace(destination)}
             />
           </View>
         </Animated.View>
@@ -190,7 +198,7 @@ export function OnboardingScreen() {
             <Button
               variant='ghost'
               label='Agora não'
-              onPress={() => router.replace('/')}
+              onPress={() => router.replace(destination)}
             />
           </View>
         </StepTransition>

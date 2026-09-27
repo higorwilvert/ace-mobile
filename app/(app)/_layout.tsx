@@ -1,10 +1,11 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, usePathname } from 'expo-router';
 
 import { LoadingState } from '@/components/ace/states';
 import palette from '@/config/palette.json';
 import { useSession } from '@/features/auth/session';
 import { useLiveMatch } from '@/features/notifications/use-live-match';
 import { usePushNotifications } from '@/features/notifications/use-push-notifications';
+import { rememberPendingLink } from '@/lib/pending-link';
 
 // Qualquer tela empilhada (inclusive por deep link) nasce com as abas por
 // baixo, para sempre existir um "voltar".
@@ -12,11 +13,16 @@ export const unstable_settings = { anchor: '(tabs)' };
 
 export default function AppLayout() {
   const { status } = useSession();
+  const pathname = usePathname();
   // T41: push e Live Activity/Live Update vivem enquanto há sessão.
   usePushNotifications(status === 'signed-in');
   useLiveMatch(status);
   if (status === 'loading') return <LoadingState />;
-  if (status === 'signed-out') return <Redirect href='/login' />;
+  if (status === 'signed-out') {
+    // Deep link sem sessão: volta para a partida depois de entrar (T49).
+    rememberPendingLink(pathname);
+    return <Redirect href='/login' />;
+  }
   return (
     <Stack
       screenOptions={{

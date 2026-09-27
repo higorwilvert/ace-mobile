@@ -53,7 +53,8 @@
           "groupIdentifier": "group.br.com.acematchmaking.mobile",
           "bundleIdentifier": "br.com.acematchmaking.mobile.widgets"
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

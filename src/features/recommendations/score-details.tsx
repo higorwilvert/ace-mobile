@@ -4,7 +4,6 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import palette from '@/config/palette.json';
-import { formatWhen } from '@/features/matches/schemas';
 
 import type { RecommendationItem, RecommendationMeta } from './api';
 import {
@@ -168,19 +167,5 @@ export function ScoreDetails({
         </Text>
       </Disclosure>
     </Disclosure>
-  );
-}
-
-/** Rodapé da lista: identifica a geração auditada na API. */
-export function GenerationDetails({ meta }: { meta: RecommendationMeta }) {
-  return (
-    <View className='rounded-panel border border-border bg-card px-4 py-2'>
-      <Disclosure title='Informações desta geração'>
-        <Row label='Geração' value={meta.generationId} />
-        <Row label='Algoritmo' value={meta.algorithmVersion} />
-        <Row label='Implementação' value={meta.implementationVersion} />
-        <Row label='Gerada em' value={formatWhen(meta.generatedAt)} />
-      </Disclosure>
-    </View>
   );
 }

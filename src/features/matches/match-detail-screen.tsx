@@ -46,6 +46,7 @@ import { invitePermissions } from '@/features/invites/schemas';
 import { useInviteMutation } from '@/features/invites/use-invite-mutation';
 import { categoryRange, policyLabels } from '@/features/players/labels';
 import { ResultPanel } from '@/features/results/result-panel';
+import { ShareButton } from '@/features/share/share-sheet';
 import { useRefetchOnFocus } from '@/hooks/use-refetch-on-focus';
 import { ApiError } from '@/lib/api-client';
 import { cn, firstName } from '@/lib/utils';
@@ -298,7 +299,10 @@ function Fact({
 }
 
 export function MatchDetailScreen() {
-  const { matchId = '' } = useLocalSearchParams<{ matchId: string }>();
+  const { matchId = '', share } = useLocalSearchParams<{
+    matchId: string;
+    share?: string;
+  }>();
   const router = useRouter();
   const valid = z.string().uuid().safeParse(matchId).success;
   const match = useQuery({ ...matchQuery(matchId), enabled: valid });
@@ -482,6 +486,8 @@ export function MatchDetailScreen() {
         </View>
         <SportIcon slug={m.sport.slug} size={52} />
       </View>
+
+      <ShareButton match={m} autoOpen={share === '1'} />
 
       <ViewerBanner
         match={m}

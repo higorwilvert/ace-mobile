@@ -89,3 +89,19 @@ jest.mock('expo-notifications', () => ({
 jest.mock('expo-widgets', () => ({
   createLiveActivity: () => ({ start: jest.fn(), getInstances: () => [] }),
 }));
+// T49: folha de compartilhar (módulos nativos).
+jest.mock('expo-sharing', () => ({
+  shareAsync: jest.fn(async () => undefined),
+  isAvailableAsync: jest.fn(async () => true),
+}));
+jest.mock('expo-file-system', () => ({
+  Paths: { cache: 'file:///cache/' },
+  File: Object.assign(
+    jest.fn((...parts: string[]) => ({ uri: parts.join('') })),
+    {
+      downloadFileAsync: jest.fn(
+        async (_url: string, file: { uri: string }) => file,
+      ),
+    },
+  ),
+}));

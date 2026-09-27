@@ -53,7 +53,6 @@ import {
   recommendationPayload,
   type RecommendationDraft,
 } from './schemas';
-import { GenerationDetails } from './score-details';
 
 const brand = palette.colors.brand;
 
@@ -131,7 +130,6 @@ function Results({
           />
         ))
       )}
-      <GenerationDetails meta={response.meta} />
     </View>
   );
 }

@@ -112,7 +112,11 @@ describe('CreateMatchScreen', () => {
     fireEvent.changeText(await screen.findByLabelText('Local'), 'Quadra 2');
     fireEvent.press(screen.getByText('Publicar partida'));
     await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith(`/matches/${detail.id}`),
+      // T49: publicada e pública → detalhe já com a folha de compartilhar.
+      expect(mockReplace).toHaveBeenCalledWith({
+        pathname: '/matches/[matchId]',
+        params: { matchId: detail.id, share: '1' },
+      }),
     );
     expect(postedBody(spy, 'POST')).toMatchObject({
       sportId: 1,

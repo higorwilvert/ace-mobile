@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { makeRecommendationMeta, makeRecommendedPlayer } from '@/test/fixtures';
 
-import { GenerationDetails, ScoreDetails, ScoreHeader } from './score-details';
+import { ScoreDetails, ScoreHeader } from './score-details';
 
 const meta = makeRecommendationMeta();
 const item = makeRecommendedPlayer();
@@ -53,15 +53,5 @@ describe('ScoreDetails', () => {
     fireEvent.press(screen.getByText('Por que esta recomendação?'));
     expect(screen.queryByText(/Rating em calibração/)).not.toBeOnTheScreen();
     expect(screen.getByText(/≈ 20 km de Florianópolis/)).toBeOnTheScreen();
-  });
-});
-
-describe('GenerationDetails', () => {
-  it('mostra id, versões e instante da geração ao expandir', () => {
-    render(<GenerationDetails meta={meta} />);
-    fireEvent.press(screen.getByText('Informações desta geração'));
-    expect(screen.getByText(meta.generationId)).toBeOnTheScreen();
-    expect(screen.getByText('ace-player-v2')).toBeOnTheScreen();
-    expect(screen.getByText('ace-player-api-v2')).toBeOnTheScreen();
   });
 });

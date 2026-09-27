@@ -241,10 +241,7 @@ describe('RecommendationsScreen (T38)', () => {
     fireEvent.press(screen.getByText('Detalhes técnicos'));
     expect(screen.getByText('ace-player-v2')).toBeOnTheScreen();
     expect(screen.getAllByText('0.825000')).toHaveLength(2);
-    fireEvent.press(screen.getByText('Informações desta geração'));
-    expect(
-      screen.getByText('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
-    ).toBeOnTheScreen();
+    expect(screen.queryByText('Informações desta geração')).toBeNull();
     fireEvent.press(screen.getByText('Convidar para jogar'));
     // Ana é FEMALE + mesmo gênero → só as minhas partidas FEMALE 2v2 de padel.
     expect(await screen.findByText('Padel de sábado')).toBeOnTheScreen();
