@@ -21,7 +21,7 @@ describe('ScoreHeader', () => {
 });
 
 describe('ScoreDetails', () => {
-  it('explica os fatores ao expandir e expõe o modo técnico com a soma reconstruída', () => {
+  it('explica os fatores ao expandir, sem detalhes técnicos', () => {
     render(<ScoreDetails item={item} meta={meta} />);
     expect(screen.queryByText('Nível de jogo')).not.toBeOnTheScreen();
     fireEvent.press(screen.getByText('Por que esta recomendação?'));
@@ -35,13 +35,8 @@ describe('ScoreDetails', () => {
         /Em Florianópolis, dentro do seu raio de busca de 50 km/,
       ),
     ).toBeOnTheScreen();
+    expect(screen.queryByText('Detalhes técnicos')).not.toBeOnTheScreen();
     expect(screen.queryByText('ace-player-v2')).not.toBeOnTheScreen();
-    fireEvent.press(screen.getByText('Detalhes técnicos'));
-    expect(screen.getByText('ace-player-v2')).toBeOnTheScreen();
-    expect(screen.getByText('ace-player-api-v2')).toBeOnTheScreen();
-    expect(screen.getByText(item.recommendationId)).toBeOnTheScreen();
-    // Total da API e soma dos fatores × pesos coincidem em 6 casas.
-    expect(screen.getAllByText('0.825000')).toHaveLength(2);
   });
   it('sem cold start e com distância em km, muda as notas', () => {
     render(

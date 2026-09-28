@@ -234,14 +234,11 @@ describe('RecommendationsScreen (T38)', () => {
     expect(generations(spy)[1]).toMatchObject({ data: { sportId: 2 } });
   });
 
-  it('expõe o modo técnico e abre o convite restrito ao escopo da busca', async () => {
+  it('abre o convite restrito ao escopo da busca', async () => {
     const spy = mockApi();
     renderWithQuery(<RecommendationsScreen />);
     fireEvent.press(await screen.findByText('Por que esta recomendação?'));
-    fireEvent.press(screen.getByText('Detalhes técnicos'));
-    expect(screen.getByText('ace-player-v2')).toBeOnTheScreen();
-    expect(screen.getAllByText('0.825000')).toHaveLength(2);
-    expect(screen.queryByText('Informações desta geração')).toBeNull();
+    expect(screen.queryByText('Detalhes técnicos')).toBeNull();
     fireEvent.press(screen.getByText('Convidar para jogar'));
     // Ana é FEMALE + mesmo gênero → só as minhas partidas FEMALE 2v2 de padel.
     expect(await screen.findByText('Padel de sábado')).toBeOnTheScreen();

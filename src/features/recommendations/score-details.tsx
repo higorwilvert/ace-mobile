@@ -12,7 +12,6 @@ import {
   factorOrder,
   formatScore,
   recommendationReasons,
-  reconstructScore,
 } from './schemas';
 
 /** Score 0–100 + os dois motivos derivados do breakdown persistido. */
@@ -87,20 +86,8 @@ function Disclosure({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <View className='flex-row justify-between gap-3'>
-      <Text variant='muted'>{label}</Text>
-      <Text className='flex-1 text-right font-inter-medium text-sm' selectable>
-        {value}
-      </Text>
-    </View>
-  );
-}
-
 /**
- * "Por que esta recomendação?": fatores × pesos recebidos na mesma geração e,
- * aninhado, o modo técnico (versões, id, total da API vs soma reconstruída).
+ * "Por que esta recomendação?": fatores × pesos recebidos na mesma geração.
  * Nada aqui recalcula o ranking: é leitura do que a API persistiu.
  */
 export function ScoreDetails({
@@ -152,20 +139,6 @@ export function ScoreDetails({
         </Text>
       )}
       <Text variant='muted'>{distanceNote(item, meta)}</Text>
-      <Disclosure title='Detalhes técnicos'>
-        <Row label='Algoritmo' value={meta.algorithmVersion} />
-        <Row label='Implementação' value={meta.implementationVersion} />
-        <Row label='Recomendação' value={item.recommendationId} />
-        <Row label='Total da API' value={item.totalScore.toFixed(6)} />
-        <Row
-          label='Soma dos fatores × pesos'
-          value={reconstructScore(item.scoreBreakdown, meta.weights).toFixed(6)}
-        />
-        <Text variant='muted'>
-          Os detalhes reproduzem o score recebido. O ranking foi calculado na
-          API.
-        </Text>
-      </Disclosure>
     </Disclosure>
   );
 }

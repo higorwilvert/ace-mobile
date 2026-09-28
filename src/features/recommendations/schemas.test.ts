@@ -14,7 +14,6 @@ import {
   recommendationFormSchema,
   recommendationPayload,
   recommendationReasons,
-  reconstructScore,
   scopePolicy,
 } from './schemas';
 
@@ -105,17 +104,6 @@ describe('recommendationReasons', () => {
 });
 
 describe('score', () => {
-  it('reconstrói o total da API a partir do breakdown', () => {
-    expect(
-      reconstructScore(
-        { level: 0.8, distance: 0.6, activity: 0.2, preferences: 1 },
-        weights,
-      ),
-    ).toBeCloseTo(0.68, 6);
-    expect(
-      reconstructScore(makeRecommendedPlayer().scoreBreakdown, weights),
-    ).toBeCloseTo(0.825, 6);
-  });
   it('formata 0–1 como 0–100 com uma casa em pt-BR, sem Intl', () => {
     expect(formatScore(0.825)).toBe('82,5');
     expect(formatScore(1)).toBe('100');

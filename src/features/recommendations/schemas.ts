@@ -45,9 +45,6 @@ const MAX_DAYS_AHEAD = 14;
 /** 0–1 → "82,5": uma casa, sem zero à direita, sem `Intl` (Hermes). */
 export const formatScore = (value: number) =>
   String(Math.round(value * 1000) / 10).replace('.', ',');
-/** Só evidência: o `totalScore` da API sempre manda na ordem e na exibição. */
-export const reconstructScore = (factors: Factors, weights: Factors) =>
-  factorOrder.reduce((total, key) => total + factors[key] * weights[key], 0);
 /** Os dois fatores que mais contribuíram (`fator × peso`); empate segue a ordem do protocolo. */
 export function recommendationReasons(
   item: Pick<RecommendationItem, 'scoreBreakdown' | 'distanceMethod'>,
